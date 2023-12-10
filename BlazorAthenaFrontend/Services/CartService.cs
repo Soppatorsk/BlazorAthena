@@ -15,15 +15,32 @@
         }
 
         public List<Product> SelectedProducts { get; set; } = new List<Product>();
+        public List<OrderLine> OrderLines { get; set; } = new List<OrderLine>();
 
         public async Task AddProductToCartAsync(Product chosenProduct)
         {
-        
             SelectedProducts.Add(chosenProduct);
         }
 
-    
-        private async Task<Product> FetchProductAsync(int productId) //Not being used?
+        public void AddOrderLine(int productId, int quantity)
+        {
+            var orderLine = new OrderLine
+            {
+                ProductID = productId,
+                Quantity = quantity
+            };
+
+            OrderLines.Add(orderLine);
+        }
+
+        public void ClearCart()
+        {
+            SelectedProducts.Clear();
+            OrderLines.Clear();
+        }
+
+        // Remove or adjust the FetchProductAsync method as it is not being used
+        private async Task<Product> FetchProductAsync(int productId)
         {
             try
             {
@@ -38,6 +55,5 @@
                 throw;
             }
         }
-
     }
 }

@@ -2,6 +2,7 @@
 @using BlazorAthenaFrontend.Services
 @using BlazorAthenaFrontend.Models
 @inject CartService CartService
+@inject System.Net.Http.HttpClient httpClient
 
 <h3>Checkout</h3>
 <h3>You have @CartService.SelectedProducts.Count item(s) in your cart:</h3>
@@ -25,7 +26,7 @@
         <div>
             Total Price: @productGroup.Sum(p => p.Price) SEK
         </div>
-        <button style="background-color: darkolivegreen; color: white;" @onclick="() => AddProduct(productGroup.First())">+</button>
+        <button style="background-color: darkolivegreen; color: white;" @onclick="() => AddProduct(productGroup.First(), amountOfItems)">+</button>
         <button style="background-color: darkred; color: white;" @onclick="() => RemoveProduct(productGroup.First())">-</button>
     </div>
 
@@ -34,26 +35,29 @@
 
 @code {
     double totalAmount = 0;
-    bool orderPlaced = false; //will check if the button "place order" has been clicked
+    bool orderPlaced = false;
     DateTime timeStamp;
-    int currentUser; // will be used to store which user have made the purchase
+    int currentUser;
+    string userInputSummary = string.Empty;
 
     private void CalculateTotalAmount()
     {
         totalAmount = CartService.SelectedProducts.Sum(p => p.Price);
     }
 
-    private void AddProduct(Product product)
+    private void AddProduct(Product product, int quantity)
     {
         CartService.SelectedProducts.Add(product);
-        CalculateTotalAmount(); // Recalculate the total amount
-    }
+        CalculateTotalAmount();
 
+        // Use the new AddOrderLine method
+        CartService.AddOrderLine(product.ID, quantity);
+    }
 
     private void RemoveProduct(Product product)
     {
         CartService.SelectedProducts.Remove(product);
-        CalculateTotalAmount(); 
+        CalculateTotalAmount();
     }
 
     protected override void OnInitialized()
@@ -62,28 +66,63 @@
         base.OnInitialized();
     }
 
-    private void PlaceOrder()
+    private async Task PlaceOrder()
     {
         orderPlaced = true;
-        timeStamp = DateTime.Now; //This variable will check against the db and send "receipt" to user if order has been approved
-        currentUser = 1; //will change depending on user ofc
+        timeStamp = DateTime.Now;
+        currentUser = 1;
 
+        var order = new
+        {
+            UserId = currentUser,
+            TotalAmount = totalAmount,
+            Comment = userInputSummary,
+            OrderLines = CartService.OrderLines.Select(ol => new
+            {
+                ProductId = ol.ProductID,
+                Quantity = ol.Quantity
+            }).ToList()
+        };
+
+        try
+        {
+            // Assuming you have an API endpoint to create orders
+            var response = await httpClient.PostAsJsonAsync("https://localhost:7088/api/Order", order);
+
+            // Check if the request was successful
+            if (response.IsSuccessStatusCode)
+            {
+                // Order successfully created, handle the response as needed
+                Console.WriteLine("Order placed successfully!");
+
+                // Clear the cart after placing the order
+                CartService.ClearCart();
+            }
+            else
+            {
+                // Handle the case where the request was not successful
+                Console.WriteLine($"Error placing order. Status code: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions that might occur during the HTTP request
+            Console.WriteLine($"Error placing order: {ex.Message}");
+        }
     }
-
 }
 
 <h3>Total amount: @totalAmount SEK</h3>
 
 <p>Add comment to the kitchen (optional)</p>
-<textarea id="userInputSummary" rows="4" cols="50" style="resize: none;"></textarea>
-<br/>
+<textarea id="userInputSummary" rows="4" cols="50" style="resize: none;" @bind="userInputSummary"></textarea>
+<br />
 @if (orderPlaced)
 {
     <i style="color: red">Waiting for approval. Order can still be altered.</i>
-    <br/>
+    <br />
     <i>You placed your order at @timeStamp</i>
 }
-<br/>
+<br />
 
 <button style="background-color: purple; color: white;" @onclick="PlaceOrder">Place order</button>
-

@@ -173,103 +173,103 @@ namespace AthenaResturantWebAPI.Services
             if (!_context.Orders.Any())
             {
                 // Create OrderLines
-                var orderLine1 = new OrderLine
-                {
-                    Quantity = 2,
-                    ProductID = 1,
-                };
+                /// orderLine1 = new OrderLine
+                //{
+                //    Quantity = 2,
+                //    ProductID = 1,
+                //};
 
-                var orderLine2 = new OrderLine
-                {
-                    Quantity = 1,
-                    ProductID = 3,
-                };
+                //var orderLine2 = new OrderLine
+                //{
+                //    Quantity = 1,
+                //    ProductID = 3,
+                //};
 
-                var orderLine3 = new OrderLine
-                {
-                    Quantity = 3,
-                    ProductID = 5,
-                };
+                //var orderLine3 = new OrderLine
+                //{
+                //    Quantity = 3,
+                //    ProductID = 5,
+                //};
 
-                var orderLine4 = new OrderLine
-                {
-                    Quantity = 1,
-                    ProductID = 2,
-                };
+                //var orderLine4 = new OrderLine
+                //{
+                //    Quantity = 1,
+                //    ProductID = 2,
+                //};
 
-                var orderLine5 = new OrderLine
-                {
-                    Quantity = 2,
-                    ProductID = 4,
-                };
-                var orderLine6 = new OrderLine
-                {
-                    Quantity = 1,
-                    ProductID = 6,
-                };
+                //var orderLine5 = new OrderLine
+                //{
+                //    Quantity = 2,
+                //    ProductID = 4,
+                //};
+                //var orderLine6 = new OrderLine
+                //{
+                //    Quantity = 1,
+                //    ProductID = 6,
+                //};
 
-                _context.OrderLines.AddRange(orderLine1, orderLine2, orderLine3, orderLine4, orderLine5, orderLine6);
-                await _context.SaveChangesAsync();
+                //_context.OrderLines.AddRange(orderLine1, orderLine2, orderLine3, orderLine4, orderLine5, orderLine6);
+                //await _context.SaveChangesAsync();
 
                 // Create Orders
-                _context.Orders.AddRange(
-                  new Order
-                  {
-                      OrderLineID = orderLine1.ID,
-                      Comment = "This order is so good that it should be named 'The Masterpiece'. Can't wait to taste the magic!",
-                      Accepted = true,
-                      TimeStamp = DateTime.UtcNow,
-                      KitchenComment = "This order is so good that it should be named 'The Masterpiece'",
-                      Delivered = false
-                  },
-            new Order
-            {
-                OrderLineID = orderLine2.ID,
-                Comment = "Just placed an order for the most fantastic meal! Cooking this order felt like preparing a meal for royalty.",
-                Accepted = false,
-                TimeStamp = DateTime.UtcNow,
-                KitchenComment = "Cooking this order felt like preparing a meal for royalty",
-                Delivered = true
-            },
-            new Order
-            {
-                OrderLineID = orderLine3.ID,
-                Comment = "Ordered a feast that's so amazing it deserves its own holiday! Can't wait to dig in.",
-                Accepted = true,
-                TimeStamp = DateTime.UtcNow,
-                KitchenComment = "This order is so good that it should be named 'The Masterpiece'",
-                Delivered = false
-            },
-            new Order
-            {
-                OrderLineID = orderLine4.ID,
-                Comment = "Just ordered a meal that's out of this world! If only every day could be this delicious.",
-                Accepted = false,
-                TimeStamp = DateTime.UtcNow,
-                KitchenComment = "Cooking this order felt like preparing a meal for royalty",
-                Delivered = true
-            },
-            new Order
-            {
-                OrderLineID = orderLine5.ID,
-                Comment = "Placed an order for a culinary masterpiece! Brace yourself for a taste bud explosion.",
-                Accepted = true,
-                TimeStamp = DateTime.UtcNow,
-                KitchenComment = "This order is so good that it should be named 'The Masterpiece'",
-                Delivered = false
-            },
-             new Order
-             {
-                 OrderLineID = orderLine6.ID,
-                 Comment = "Ordering this meal feels like unlocking a secret level of flavor! Can't wait to savor every bite.",
-                 Accepted = false,
-                 TimeStamp = DateTime.UtcNow, // Use UTC time
-                 KitchenComment = "Cooking this order felt like preparing a meal for royalty",
-             }
+            //    _context.Orders.AddRange(
+            //      new Order
+            //      {
+            //          OrderLineID = orderLine1.ID,
+            //          Comment = "This order is so good that it should be named 'The Masterpiece'. Can't wait to taste the magic!",
+            //          Accepted = true,
+            //          TimeStamp = DateTime.UtcNow,
+            //          KitchenComment = "This order is so good that it should be named 'The Masterpiece'",
+            //          Delivered = false
+            //      },
+            //new Order
+            //{
+            //    OrderLineID = orderLine2.ID,
+            //    Comment = "Just placed an order for the most fantastic meal! Cooking this order felt like preparing a meal for royalty.",
+            //    Accepted = false,
+            //    TimeStamp = DateTime.UtcNow,
+            //    KitchenComment = "Cooking this order felt like preparing a meal for royalty",
+            //    Delivered = true
+            //},
+            //new Order
+            //{
+            //    OrderLineID = orderLine3.ID,
+            //    Comment = "Ordered a feast that's so amazing it deserves its own holiday! Can't wait to dig in.",
+            //    Accepted = true,
+            //    TimeStamp = DateTime.UtcNow,
+            //    KitchenComment = "This order is so good that it should be named 'The Masterpiece'",
+            //    Delivered = false
+            //},
+            //new Order
+            //{
+            //    OrderLineID = orderLine4.ID,
+            //    Comment = "Just ordered a meal that's out of this world! If only every day could be this delicious.",
+            //    Accepted = false,
+            //    TimeStamp = DateTime.UtcNow,
+            //    KitchenComment = "Cooking this order felt like preparing a meal for royalty",
+            //    Delivered = true
+            //},
+            //new Order
+            //{
+            //    OrderLineID = orderLine5.ID,
+            //    Comment = "Placed an order for a culinary masterpiece! Brace yourself for a taste bud explosion.",
+            //    Accepted = true,
+            //    TimeStamp = DateTime.UtcNow,
+            //    KitchenComment = "This order is so good that it should be named 'The Masterpiece'",
+            //    Delivered = false
+            //},
+            // new Order
+            // {
+            //     OrderLineID = orderLine6.ID,
+            //     Comment = "Ordering this meal feels like unlocking a secret level of flavor! Can't wait to savor every bite.",
+            //     Accepted = false,
+            //     TimeStamp = DateTime.UtcNow, // Use UTC time
+            //     KitchenComment = "Cooking this order felt like preparing a meal for royalty",
+            // }
 
-            );
+            //);
 
-                await _context.SaveChangesAsync();
+            //    await _context.SaveChangesAsync();
             }
 
         }
