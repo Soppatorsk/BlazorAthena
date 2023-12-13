@@ -17,6 +17,18 @@ namespace AthenaResturantWebAPI.Data.Context
         public DbSet<Product> Products { get; set; }
         public DbSet<SubCategory> SubCategories { get; set; }
 
+
+        //protected override void OnModelCreating(ModelBuilder modelBuilder)
+        //{
+        //    base.OnModelCreating(modelBuilder);
+
+        //    // relationship Order and OrderLine
+        //    modelBuilder.Entity<BlazorAthena.Models.Order>()
+        //        .HasMany(o => o.OrderLines)
+        //        .WithOne(ol => ol.Order)
+        //        .HasForeignKey(ol => ol.OrderID);
+        //}
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -30,6 +42,7 @@ namespace AthenaResturantWebAPI.Data.Context
                 .Property(p => p.Price)
                 .HasColumnType("decimal(18, 2)"); 
         }
+
 
     }
 

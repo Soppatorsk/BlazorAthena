@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Net.Http;
     using System.Threading.Tasks;
+  
 
     public class CartService
     {
@@ -15,15 +16,47 @@
         }
 
         public List<Product> SelectedProducts { get; set; } = new List<Product>();
+        public List<OrderLine> OrderLines { get; set; } = new List<OrderLine>();
+
+        
 
         public async Task AddProductToCartAsync(Product chosenProduct)
         {
-        
             SelectedProducts.Add(chosenProduct);
+
+            //also add these products to orderline so a new list?
         }
 
-    
-        private async Task<Product> FetchProductAsync(int productId) //Not being used?
+        public void AddOrderLine(int quantity, int addedOrderId, List<Product> SelectedProducts) //Kolla på detta. Den ska ju ta quantity samt ALLA enskilda produkter (bara samma en gång)
+        {
+            var groupedProducts = SelectedProducts
+            .GroupBy(p => p.ID)
+            .Select(group => new
+            {
+                ProductID = group.Key,
+                Quantity = group.Count()
+            });
+
+            foreach (var g in groupedProducts)
+            {
+                var orderLine = new OrderLine
+                {
+                    ProductID = g.ProductID,
+                    Quantity = g.Quantity,
+                    OrderID = addedOrderId,
+                };
+                OrderLines.Add(orderLine);
+            }
+        }
+
+        public void ClearCart()
+        {
+            SelectedProducts.Clear();
+            OrderLines.Clear();
+        }
+
+        // Remove or adjust the FetchProductAsync method as it is not being used
+        private async Task<Product> FetchProductAsync(int productId)
         {
             try
             {
@@ -38,6 +71,5 @@
                 throw;
             }
         }
-
     }
 }
