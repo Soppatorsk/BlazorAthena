@@ -129,6 +129,12 @@ namespace AthenaResturantWebAPI
             app.MapSubCategoryEndpoints();
 
             app.MapProductEndpoints();
+
+                        app.MapOrderEndpoints();
+
+                        app.MapOrderLineEndpoints();
+
+                        
             
             app.Run();
         }

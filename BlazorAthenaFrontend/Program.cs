@@ -51,8 +51,11 @@ namespace BlazorAthenaFrontend
             builder.Services.AddSingleton<SubCategoryService>();
             builder.Services.AddScoped<JwtDecoderService>();
             builder.Services.AddSingleton<ImageService>();
-
             builder.Services.AddScoped<ProductService>();
+
+            builder.Services.AddScoped<CartService>();
+
+
 
             builder.Services.AddHttpClient<ProductService>(client =>
             {

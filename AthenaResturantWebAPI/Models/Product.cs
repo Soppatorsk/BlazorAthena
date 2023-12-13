@@ -36,5 +36,7 @@ namespace BlazorAthena.Models
         public int SubCategoryId { get; set; }
 
         public SubCategory SubCategory { get; set; }
+        public int VAT { get; set; } = 0;
+
     }
 }
