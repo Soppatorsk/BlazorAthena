@@ -3,6 +3,7 @@
 @page "/users"
 @inject HttpClient httpClient
 @inject UserService UserService
+@inject NavigationManager NavigationManager
 
 <h3>User List</h3>
 
@@ -11,8 +12,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        users = await httpClient.GetFromJsonAsync<List<ApplicationUser>>("https://localhost:7088/api/fetchusers");
+        users = await httpClient.GetFromJsonAsync<List<ApplicationUser>>("https://localhost:7088/fetchusers");
         //users = await UserService.FetchUsersAsync();
+    }
+
+    void NavigateToEditPage(string userId)
+    {
+        NavigationManager.NavigateTo($"/edituser/{userId}");
     }
 }
 
@@ -25,9 +31,9 @@ else
     <table class="table">
         <thead>
             <tr>
-                <th>Id</th>
                 <th>Email</th>
                 <th>UserName</th>
+                <th>Actions</th>
                 <!-- Add other properties as needed -->
             </tr>
         </thead>
@@ -35,9 +41,11 @@ else
             @foreach (var user in users)
             {
                 <tr>
-                    <td>@user.Id</td>
                     <td>@user.Email</td>
                     <td>@user.UserName</td>
+                    <td>
+                        <button @onclick="() => NavigateToEditPage(user.Id)">Edit</button>
+                    </td>
                     <!-- Add other properties as needed -->
                 </tr>
             }

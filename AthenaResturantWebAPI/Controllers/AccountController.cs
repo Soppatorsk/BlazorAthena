@@ -63,7 +63,7 @@ public class AccountController : ControllerBase
 
     }*/
 
-    [HttpPost("fetchusers")]
+    [HttpGet("fetchusers")]
     public async Task<IActionResult> FetchUsers([FromServices] UserManager<ApplicationUser> userManager)
     {
         var users = await userManager.Users.ToListAsync();
