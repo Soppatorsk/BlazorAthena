@@ -1,4 +1,5 @@
 ﻿using AthenaResturantWebAPI.Data.AppUser;
+using AthenaResturantWebAPI.Models;
 using BlazorAthena.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ namespace AthenaResturantWebAPI.Data.Context
         public DbSet<OrderLine> OrderLines { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<SubCategory> SubCategories { get; set; }
+        public DbSet<Merch> Merch { get; set; }
 
 
         //protected override void OnModelCreating(ModelBuilder modelBuilder)
