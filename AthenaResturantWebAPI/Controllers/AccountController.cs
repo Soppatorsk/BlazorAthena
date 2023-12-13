@@ -6,6 +6,8 @@ using AthenaResturantWebAPI.Services;
 using System.Threading.Tasks;
 using AthenaResturantWebAPI.Data.AppUser;
 using AthenaResturantWebAPI.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 
 public class AccountController : ControllerBase
@@ -53,6 +55,107 @@ public class AccountController : ControllerBase
         // Model is not valid
         return BadRequest("Invalid model");
     }
+
+    /*
+    [HttpPost("fetchusers")]
+    public async Task<IActionResult> FetchUsers()
+    {
+
+    }*/
+
+    [HttpPost("fetchusers")]
+    public async Task<IActionResult> FetchUsers([FromServices] UserManager<ApplicationUser> userManager)
+    {
+        var users = await userManager.Users.ToListAsync();
+        return Ok(users);
+    }
+
+
+
+
+
+    [HttpPost("editusersroles")]
+    public async Task<IActionResult> EditUsersRoles([FromBody] RoleOutputModel roleOutput, [FromServices] UserManager<ApplicationUser> userManager)
+    {
+        var user = await userManager.FindByNameAsync(roleOutput.UserName);
+        if (user == null)
+        {
+            return NotFound($"User '{roleOutput.UserName}' not found.");
+        }
+
+        // Get the current roles attached to the user
+        var currentRoles = await userManager.GetRolesAsync(user);
+
+        // Remove all roles associated with the user
+        var removeResult = await userManager.RemoveFromRolesAsync(user, currentRoles);
+        if (!removeResult.Succeeded)
+        {
+            return BadRequest("Failed to remove user roles.");
+        }
+
+        // Assign the user to the new role
+        var addResult = await userManager.AddToRoleAsync(user, roleOutput.RoleName);
+        if (!addResult.Succeeded)
+        {
+            return BadRequest("Failed to add user to role.");
+        }
+
+        return Ok($"User '{roleOutput.UserName}' has been assigned to role '{roleOutput.RoleName}'.");
+    }
+
+
+
+
+    [HttpPost("editusers")]
+    public async Task<IActionResult> EditUsers([FromBody] ApplicationUser updatedUser, [FromServices] UserManager<ApplicationUser> userManager, [FromServices] RoleManager<IdentityRole> roleManager)
+    {
+        if (updatedUser == null || string.IsNullOrEmpty(updatedUser.Id))
+        {
+            return BadRequest("Invalid user data.");
+        }
+
+        // Fetch the user from the database
+        var user = await userManager.FindByIdAsync(updatedUser.Id);
+
+        if (user == null)
+        {
+            return NotFound($"User with ID = {updatedUser.Id} not found.");
+        }
+
+        // Update the user properties
+        user.Email = updatedUser.Email ?? user.Email;
+        user.UserName = updatedUser.UserName ?? user.UserName;
+        // Add other properties that you want to update
+
+        // Save the changes
+        var result = await userManager.UpdateAsync(user);
+
+        if (!result.Succeeded)
+        {
+            return BadRequest("User update failed.");
+        }
+
+        // Assume userManager is an instance of UserManager<TUser>
+        var oldRole = await userManager.GetRolesAsync(user);
+        var result1 = await userManager.AddToRoleAsync(user, "Manager"); //roleOutput.RoleName
+
+        // Removing a user from a role
+        var result2 = await userManager.RemoveFromRoleAsync(user, oldRole.ToString());
+
+
+        return Ok(user);
+    }
+
+
+
+
+
+
+
+
+
+
+
 
 
     [HttpGet("current-user")]

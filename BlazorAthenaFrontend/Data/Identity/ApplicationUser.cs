@@ -4,6 +4,5 @@ namespace BlazorAthenaFrontend.Data.Identity
 {
     public class ApplicationUser : IdentityUser
     {
-         
     }
 }

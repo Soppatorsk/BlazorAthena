@@ -1,0 +1,49 @@
+﻿@using BlazorAthenaFrontend.Services;
+@using BlazorAthenaFrontend.Data.Identity;
+@page "/users"
+@inject HttpClient httpClient
+@inject UserService UserService
+
+<h3>User List</h3>
+
+@code {
+    private List<ApplicationUser> users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await httpClient.GetFromJsonAsync<List<ApplicationUser>>("https://localhost:7088/api/fetchusers");
+        //users = await UserService.FetchUsersAsync();
+    }
+}
+
+@if (users == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Email</th>
+                <th>UserName</th>
+                <!-- Add other properties as needed -->
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.Id</td>
+                    <td>@user.Email</td>
+                    <td>@user.UserName</td>
+                    <!-- Add other properties as needed -->
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+

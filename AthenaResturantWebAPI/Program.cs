@@ -49,7 +49,10 @@ namespace AthenaResturantWebAPI
 
             // AddScoped for ProductServices
             builder.Services.AddScoped<ProductService>();
-
+            builder.Services.AddHttpClient<ProductService>(client =>
+            {
+                client.BaseAddress = new Uri("https://localhost:7088/");
+            });
             // AddHttpClient registration
             builder.Services.AddHttpClient();
 
