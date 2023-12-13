@@ -5,6 +5,8 @@ using System.Security.Claims;
 using AthenaResturantWebAPI.Services;
 using System.Threading.Tasks;
 using AthenaResturantWebAPI.Data.AppUser;
+using AthenaResturantWebAPI.Models;
+
 
 public class AccountController : ControllerBase
 {
@@ -19,6 +21,38 @@ public class AccountController : ControllerBase
         _jwtService = jwtService;
     }
 
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginViewModel model)
+    {
+        if (ModelState.IsValid)
+        {
+            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+
+            if (result.Succeeded)
+            {
+             
+                // Authentication succeeded
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                var roles = await _userManager.GetRolesAsync(user);
+
+                // Generate the JWT token
+                var token = _jwtService.GenerateJwtToken(user.Id, user.Email, roles.ToList());
+
+                // Return the JWT token directly
+                return Ok(new { Token = token });
+
+            }
+            else
+            {
+                // Authentication failed
+                return BadRequest("Invalid login attempt");
+            }
+        }
+
+        // Model is not valid
+        return BadRequest("Invalid model");
+    }
 
 
     [HttpGet("current-user")]
@@ -48,7 +82,6 @@ public class AccountController : ControllerBase
             UserId = user.Id,
             UserName = user.UserName,
             Email = user.Email,
-            // Add any other properties you want to expose
         });
     }
 
@@ -75,8 +108,8 @@ public class AccountController : ControllerBase
 
         // Retrieve the user's roles
         var roles = await _userManager.GetRolesAsync(user);
+
         // Generate the JWT token
-        
         var token = _jwtService.GenerateJwtToken(user.Id, user.Email, roles.ToList());
 
         // Now 'user' contains the IdentityUser object for the current user

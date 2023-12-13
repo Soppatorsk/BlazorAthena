@@ -41,7 +41,7 @@ namespace AthenaResturantWebAPI
                     ValidateAudience = false,
                 };
             });
-
+      
 
             // JwtService
             builder.Services.AddScoped<JwtService>();
@@ -55,16 +55,26 @@ namespace AthenaResturantWebAPI
 
 
             // CORS configuration
+            //builder.Services.AddCors(options =>
+            //{
+            //    options.AddDefaultPolicy(builder =>
+            //    {
+            //        builder.AllowAnyOrigin()
+            //               .AllowAnyMethod()
+            //               .AllowAnyHeader();
+            //    });
+            //});
+
             builder.Services.AddCors(options =>
             {
-                options.AddDefaultPolicy(builder =>
-                {
-                    builder.AllowAnyOrigin()
-                           .AllowAnyMethod()
-                           .AllowAnyHeader();
-                });
+                options.AddPolicy("AllowAnyOrigin",
+                    builder =>
+                    {
+                        builder.AllowAnyOrigin()
+                            .AllowAnyHeader()
+                            .AllowAnyMethod();
+                    });
             });
-
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -94,10 +104,10 @@ namespace AthenaResturantWebAPI
 
 
             var app = builder.Build();
-            app.MapPost("/product", [Authorize] () => "Simon is King").RequireAuthorization();
-            app.MapGet("/product", [Authorize] () => "Simon is Boss").RequireAuthorization();
-            app.MapPut("/product", [Authorize] () => "Simon is Master").RequireAuthorization();
-            app.MapDelete("/product", [Authorize] () => "Simon is Senpai").RequireAuthorization();
+            //app.MapPost("/product", [Authorize] () => "Simon is King").RequireAuthorization();
+            //app.MapGet("/product", [Authorize] () => "Simon is Boss").RequireAuthorization();
+            //app.MapPut("/product", [Authorize] () => "Simon is Master").RequireAuthorization();
+            //app.MapDelete("/product", [Authorize] () => "Simon is Senpai").RequireAuthorization();
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {

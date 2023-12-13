@@ -34,16 +34,20 @@ namespace AthenaResturantWebAPI.Services
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtSecretKey = Encoding.UTF8.GetBytes(GenerateKey());
-            //Encoding.UTF8.GetBytes(_iConfiguration["Jwt:SecretKey"]);
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                new Claim(ClaimTypes.NameIdentifier, userId),
-                new Claim(ClaimTypes.Email, userEmail),
-                new Claim(ClaimTypes.Role, string.Join(",", roles)),
-                    // Add more claims as needed
+            new Claim(ClaimTypes.NameIdentifier, userId),
+            new Claim(ClaimTypes.Email, userEmail),
+            new Claim(ClaimTypes.Role, string.Join(",", roles)),
                 }),
+
+                // Set the NotBefore timestamp to the current time
+                NotBefore = DateTime.UtcNow,
+
+                // Set the Expires timestamp to a future time
                 Expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_iConfiguration["Jwt:TokenExpirationInMinutes"])),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(jwtSecretKey), SecurityAlgorithms.HmacSha256Signature)
             };
@@ -51,6 +55,7 @@ namespace AthenaResturantWebAPI.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+
         public bool ValidateJwtToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();

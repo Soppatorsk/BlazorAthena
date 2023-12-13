@@ -17,6 +17,7 @@ namespace AthenaResturantWebAPI.Data.Context
         public DbSet<Product> Products { get; set; }
         public DbSet<SubCategory> SubCategories { get; set; }
 
+
         //protected override void OnModelCreating(ModelBuilder modelBuilder)
         //{
         //    base.OnModelCreating(modelBuilder);
@@ -27,6 +28,21 @@ namespace AthenaResturantWebAPI.Data.Context
         //        .WithOne(ol => ol.Order)
         //        .HasForeignKey(ol => ol.OrderID);
         //}
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+
+            modelBuilder.Entity<Order>()
+                .Property(o => o.SaleAmount)
+                .HasColumnType("decimal(18, 2)"); 
+
+            modelBuilder.Entity<Product>()
+                .Property(p => p.Price)
+                .HasColumnType("decimal(18, 2)"); 
+        }
+
 
     }
 

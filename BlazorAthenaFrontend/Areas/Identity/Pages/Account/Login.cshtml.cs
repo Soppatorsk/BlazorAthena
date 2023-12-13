@@ -15,6 +15,9 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System.Text;
+using BlazorAthenaFrontend.Models;
 
 namespace BlazorAthenaFrontend.Areas.Identity.Pages.Account
 {
@@ -22,12 +25,15 @@ namespace BlazorAthenaFrontend.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger)
+        public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger, IHttpClientFactory httpClientFactory)
         {
             _signInManager = signInManager;
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
+
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -110,32 +116,56 @@ namespace BlazorAthenaFrontend.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                // This doesn't count login failures towards account lockout
-                // To enable password failures to trigger account lockout, set lockoutOnFailure: true
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+              
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");
+
+                    // Call the method in AccountController to generate and validate JWT token
+                    var token = await GetJwtTokenFromAccountController(Input.Email, Input.Password);
+
+                    // Store or use the token as needed
+                    // For example, store it in a cookie or use it for further API requests
+
                     return LocalRedirect(returnUrl);
                 }
-                if (result.RequiresTwoFactor)
-                {
-                    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
-                }
-                if (result.IsLockedOut)
-                {
-                    _logger.LogWarning("User account locked out.");
-                    return RedirectToPage("./Lockout");
-                }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return Page();
-                }
+
+                // Handle other login failure scenarios...
             }
 
             // If we got this far, something failed, redisplay form
             return Page();
         }
+        private async Task<string> GetJwtTokenFromAccountController(string email, string password)
+        {
+            try
+            {
+                var client = new HttpClient();
+                client.BaseAddress = new Uri("https://localhost:7088");
+
+                // Adjust the URL to the endpoint in your AccountController responsible for token generation
+                var response = await client.PostAsync("/login", new StringContent(JsonConvert.SerializeObject(new { Email = email, Password = password }), Encoding.UTF8, "application/json"));
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var tokenResponse = JsonConvert.DeserializeObject<TokenModel>(await response.Content.ReadAsStringAsync());
+                    return tokenResponse.Token;
+                }
+
+                // Log the unsuccessful response status code
+                Console.WriteLine($"Error: {response.StatusCode} - {response.ReasonPhrase}");
+                ModelState.AddModelError(string.Empty, "Failed to retrieve JWT token.");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                // Log any exception that occurs during the HTTP request
+                Console.WriteLine($"Exception: {ex.Message}");
+                ModelState.AddModelError(string.Empty, "An error occurred while retrieving JWT token.");
+                return null;
+            }
+        }
+
     }
 }
