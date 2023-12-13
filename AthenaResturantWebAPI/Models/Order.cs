@@ -20,6 +20,6 @@ namespace BlazorAthena.Models
         public decimal? SaleAmount { get; set; } = decimal.Zero;
 
         // Add a collection of OrderLines
-        public ICollection<OrderLine> OrderLines { get; set; }
+        public ICollection<OrderLine> OrderLines { get; set; } = new List<OrderLine>();
     }
 }

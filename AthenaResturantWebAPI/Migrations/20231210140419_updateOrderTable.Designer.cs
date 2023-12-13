@@ -4,6 +4,7 @@ using AthenaResturantWebAPI.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AthenaResturantWebAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231210140419_updateOrderTable")]
+    partial class updateOrderTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -161,7 +164,7 @@ namespace AthenaResturantWebAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
-                    b.Property<int>("OrderID")
+                    b.Property<int?>("OrderID")
                         .HasColumnType("int");
 
                     b.Property<int>("ProductID")
@@ -212,9 +215,6 @@ namespace AthenaResturantWebAPI.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("SubCategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("VAT")
                         .HasColumnType("int");
 
                     b.HasKey("ID");
@@ -384,19 +384,15 @@ namespace AthenaResturantWebAPI.Migrations
 
             modelBuilder.Entity("BlazorAthena.Models.OrderLine", b =>
                 {
-                    b.HasOne("BlazorAthena.Models.Order", "Order")
+                    b.HasOne("BlazorAthena.Models.Order", null)
                         .WithMany("OrderLines")
-                        .HasForeignKey("OrderID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("OrderID");
 
                     b.HasOne("BlazorAthena.Models.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Order");
 
                     b.Navigation("Product");
                 });

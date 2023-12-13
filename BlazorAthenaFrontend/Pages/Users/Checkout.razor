@@ -2,7 +2,10 @@
 @using BlazorAthenaFrontend.Services
 @using BlazorAthenaFrontend.Models
 @inject CartService CartService
+@inject BlazorAthenaFrontend.Services.CartService CartService
+
 @inject System.Net.Http.HttpClient httpClient
+
 
 <h3>Checkout</h3>
 <h3>You have @CartService.SelectedProducts.Count item(s) in your cart:</h3>
@@ -39,22 +42,22 @@
     DateTime timeStamp;
     int currentUser;
     string userInputSummary = string.Empty;
+    int addedOrderId = -1; //will catch the ID of newly added order
 
     private void CalculateTotalAmount()
     {
         totalAmount = CartService.SelectedProducts.Sum(p => p.Price);
     }
 
-    private void AddProduct(Product product, int quantity)
+    private void AddProduct(Product product, int quantity) //When user clicks additional item from ones already chosen ie +
     {
         CartService.SelectedProducts.Add(product);
         CalculateTotalAmount();
-
-        // Use the new AddOrderLine method
-        CartService.AddOrderLine(product.ID, quantity);
     }
 
-    private void RemoveProduct(Product product)
+
+
+    private void RemoveProduct(Product product) // same as above, but removes ie -
     {
         CartService.SelectedProducts.Remove(product);
         CalculateTotalAmount();
@@ -65,7 +68,6 @@
         CalculateTotalAmount();
         base.OnInitialized();
     }
-
     private async Task PlaceOrder()
     {
         orderPlaced = true;
@@ -86,21 +88,43 @@
 
         try
         {
-            // Assuming you have an API endpoint to create orders
-            var response = await httpClient.PostAsJsonAsync("https://localhost:7088/api/Order", order);
+            // Send the main order
+            await SendOrder("https://localhost:7088/api/Order", order);
 
-            // Check if the request was successful
+            CartService.AddOrderLine(currentUser, addedOrderId, CartService.SelectedProducts);
+            // Send the (grouped) order lines
+            foreach (var orderLine in CartService.OrderLines)
+            {
+                await SendOrderLine("https://localhost:7088/api/OrderLine", orderLine);
+            }
+
+            // Clear the cart after placing the order
+            CartService.ClearCart();
+            
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error placing order: {ex.Message}");
+            Console.WriteLine($"Error placing order: {ex.Message}");
+        }
+    }
+
+    private async Task SendOrder(string endpoint, object order)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync(endpoint, order);
+
             if (response.IsSuccessStatusCode)
             {
-                // Order successfully created, handle the response as needed
-                Console.WriteLine("Order placed successfully!");
+                var addedOrder = await response.Content.ReadFromJsonAsync<Order>();
 
-                // Clear the cart after placing the order
-                CartService.ClearCart();
+                // Gets the added order's ID
+                addedOrderId = addedOrder?.ID ?? -1; //-1 for fails
             }
             else
             {
-                // Handle the case where the request was not successful
                 Console.WriteLine($"Error placing order. Status code: {response.StatusCode}");
             }
         }
@@ -110,6 +134,27 @@
             Console.WriteLine($"Error placing order: {ex.Message}");
         }
     }
+
+    private async Task SendOrderLine(string endpoint, OrderLine orderLine)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync(endpoint, orderLine);
+
+            // Check if the request was successful
+            if (!response.IsSuccessStatusCode)
+            {
+                // Handle the case where the request was not successful
+                Console.WriteLine($"Error placing order line. Status code: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions that might occur during the HTTP request
+            Console.WriteLine($"Error placing order line: {ex.Message}");
+        }
+    }
+}
 }
 
 <h3>Total amount: @totalAmount SEK</h3>
