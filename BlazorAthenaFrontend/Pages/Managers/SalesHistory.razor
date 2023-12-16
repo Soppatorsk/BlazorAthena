@@ -1,0 +1,38 @@
+﻿@page "/sales"
+@inject BlazorAthenaFrontend.Services.JwtDecoderService JwtDecoderService
+@using System.Security.Claims
+
+@if (salesHistory == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <ul>
+        @foreach (var sale in salesHistory)
+        {
+            <li>@sale.OrderId - @sale.SaleAmount</li>
+        }
+    </ul>
+}
+
+@code {
+    private List<SaleModel> salesHistory;
+
+    // Inject the HttpClient service
+    [Inject]
+    private HttpClient HttpClient { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Call the API endpoint to get sales history
+        salesHistory = await HttpClient.GetFromJsonAsync<List<SaleModel>>("https://your-api-domain/api/sales/history?timeFrame=week");
+    }
+
+    private class SaleModel
+    {
+        public int OrderId { get; set; }
+        public decimal SaleAmount { get; set; }
+        // Include other properties as needed
+    }
+}
