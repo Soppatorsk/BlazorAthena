@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Net.Http;
     using System.Threading.Tasks;
+    using BlazorAthenaFrontend.Pages;
   
 
     public class CartService
@@ -27,7 +28,7 @@
             //also add these products to orderline so a new list?
         }
 
-        public void AddOrderLine(int quantity, int addedOrderId, List<Product> SelectedProducts) //Kolla på detta. Den ska ju ta quantity samt ALLA enskilda produkter (bara samma en gång)
+        public void AddOrderLine(int addedOrderId, List<Product> SelectedProducts) //Kolla på detta. Den ska ju ta quantity samt ALLA enskilda produkter (bara samma en gång)
         {
             var groupedProducts = SelectedProducts
             .GroupBy(p => p.ID)
@@ -49,10 +50,11 @@
             }
         }
 
-        public void ClearCart()
+        public int ClearCart()
         {
             SelectedProducts.Clear();
             OrderLines.Clear();
+            return 0; //clearing total amount
         }
 
         // Remove or adjust the FetchProductAsync method as it is not being used
