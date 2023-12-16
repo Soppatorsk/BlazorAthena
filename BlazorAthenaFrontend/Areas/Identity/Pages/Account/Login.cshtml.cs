@@ -18,20 +18,24 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Text;
 using BlazorAthenaFrontend.Models;
+using BlazorAthenaFrontend.Services;
 
 namespace BlazorAthenaFrontend.Areas.Identity.Pages.Account
 {
+
     public class LoginModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly TokenService _tokenService;
 
-        public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger, IHttpClientFactory httpClientFactory)
+        public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger, IHttpClientFactory httpClientFactory, TokenService tokenService)
         {
             _signInManager = signInManager;
             _logger = logger;
             _httpClientFactory = httpClientFactory;
+            _tokenService = tokenService;
         }
 
 
@@ -125,8 +129,9 @@ namespace BlazorAthenaFrontend.Areas.Identity.Pages.Account
                     // Call the method in AccountController to generate and validate JWT token
                     var token = await GetJwtTokenFromAccountController(Input.Email, Input.Password);
 
-                    // Store or use the token as needed
-                    // For example, store it in a cookie or use it for further API requests
+                    // Store or use the token
+                    _tokenService.Token = token;
+
 
                     return LocalRedirect(returnUrl);
                 }

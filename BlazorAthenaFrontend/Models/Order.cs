@@ -17,6 +17,7 @@ namespace BlazorAthenaFrontend.Models
 
             // Add a collection of OrderLines
             public ICollection<OrderLine> OrderLines { get; set; }
+            public string? UserID { get; set; } = "0";
         }
     }
 
