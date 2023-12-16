@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using AthenaResturantWebAPI.Models;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BlazorAthena.Models
@@ -29,6 +30,12 @@ namespace BlazorAthena.Models
         public int? FoodID { get; set; }
 
         public Food? Food { get; set; }
+
+        [ForeignKey("Merch")]
+        public int? MerchID { get; set; }
+
+        public Merch? Merch { get; set; }
+
 
         public bool Available { get; set; } = true;
 

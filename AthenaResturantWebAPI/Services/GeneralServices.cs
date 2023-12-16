@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Hosting;
 using AthenaResturantWebAPI.Data.AppUser;
 using System.Security.Claims;
+using Humanizer;
+using AthenaResturantWebAPI.Migrations;
+using AthenaResturantWebAPI.Models;
 
 
 namespace AthenaResturantWebAPI.Services
@@ -66,8 +69,9 @@ namespace AthenaResturantWebAPI.Services
                     // Seed Roles 
                     await SeedRoles(roleManager);
                     _context.SaveChanges();
-                    // Seed Drinks and Foods
+                    // Seed product subtables (food, drink, merch)
                     await AllergiesAndDrinks(context);
+                    await SeedMerch(context);
                     // Seed Products
                     await AssignSubCategoryId(context);
                     _context.SaveChanges();
@@ -391,6 +395,41 @@ namespace AthenaResturantWebAPI.Services
 
         }
 
+        public async Task SeedMerch(AppDbContext context)
+        {
+            context.Merch.AddRange(
+                new Models.Merch
+                {
+                    Size = "S",
+                    Color = "White",
+                },
+                new Models.Merch
+                {
+                    Size = "M",
+                    Color = "White",
+                },
+                new Models.Merch
+                {
+                    Size = "L",
+                    Color = "White",
+                },
+                new Models.Merch
+                {
+                    Size = "S",
+                    Color = "Red",
+                },
+                new Models.Merch
+                {
+                    Size = "M",
+                    Color = "Red",
+                },
+                new Models.Merch
+                {
+                    Size = "L",
+                    Color = "Red",
+                }
+                );
+        }
         public async Task AllergiesAndDrinks(AppDbContext context)
         {
             context.Drinks.AddRange(
@@ -471,11 +510,13 @@ namespace AthenaResturantWebAPI.Services
             var bevrageSubCategory = new SubCategory { Name = "Beverages " };
             var mainCourseSubCategory = new SubCategory { Name = "Main Courses " };
             var dessertSubCategory = new SubCategory { Name = "Desserts " };
+            var merchSubCategory = new SubCategory { Name = "Merch " };
 
             // Assign existing SubCategory IDs
             bevrageSubCategory.ID = subCategoryIds.GetValueOrDefault(bevrageSubCategory.Name);
             mainCourseSubCategory.ID = subCategoryIds.GetValueOrDefault(mainCourseSubCategory.Name);
             dessertSubCategory.ID = subCategoryIds.GetValueOrDefault(dessertSubCategory.Name);
+            dessertSubCategory.ID = subCategoryIds.GetValueOrDefault(merchSubCategory.Name);
 
             // Check if database is already populated
             if (context.SubCategories.Any())
@@ -490,7 +531,7 @@ namespace AthenaResturantWebAPI.Services
                 // Seeding
 
 
-                context.SubCategories.AddRange(bevrageSubCategory, mainCourseSubCategory, dessertSubCategory);
+                context.SubCategories.AddRange(bevrageSubCategory, mainCourseSubCategory, dessertSubCategory, merchSubCategory);
                 await context.SaveChangesAsync();  // Save changes to generate IDs
 
 
@@ -675,13 +716,82 @@ namespace AthenaResturantWebAPI.Services
                             FoodID = 3,
                             VAT = 12,
 
-                        }
+                        },
+                        new Product
+                        {
 
+                            Name = "shirt",
+                            Price = 99m,
+                            Description = "A sick tshirt",
+                            Image = "shirt.jpg",
+                            Available = true,
+                            SubCategoryId = merchSubCategory.ID,
+                            VAT = 12,
+                            MerchID = 1
+                        },
+                        new Product
+                        {
+
+                            Name = "shirt",
+                            Price = 99m,
+                            Description = "A sick tshirt",
+                            Image = "shirt.jpg",
+                            Available = true,
+                            SubCategoryId = merchSubCategory.ID,
+                            VAT = 12,
+                            MerchID = 2
+                        },
+                        new Product
+                        {
+
+                            Name = "shirt",
+                            Price = 99m,
+                            Description = "A sick tshirt",
+                            Image = "shirt.jpg",
+                            Available = true,
+                            SubCategoryId = merchSubCategory.ID,
+                            VAT = 12,
+                            MerchID = 3
+                        },
+                        new Product
+                        {
+
+                            Name = "shirt",
+                            Price = 99m,
+                            Description = "A sick tshirt",
+                            Image = "shirtRed.jpg",
+                            Available = true,
+                            SubCategoryId = merchSubCategory.ID,
+                            VAT = 12,
+                            MerchID = 4
+                        },
+                        new Product
+                        {
+
+                            Name = "shirt",
+                            Price = 99m,
+                            Description = "A sick tshirt",
+                            Image = "shirtRed.jpg",
+                            Available = true,
+                            SubCategoryId = merchSubCategory.ID,
+                            VAT = 12,
+                            MerchID = 5
+                        },
+                        new Product
+                        {
+
+                            Name = "shirt",
+                            Price = 99m,
+                            Description = "A sick tshirt",
+                            Image = "shirtRed.jpg",
+                            Available = true,
+                            SubCategoryId = merchSubCategory.ID,
+                            VAT = 12,
+                            MerchID = 6
+                        }
                         );
 
         }
-
-
 
     }
 }
