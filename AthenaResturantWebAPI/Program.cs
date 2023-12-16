@@ -10,6 +10,10 @@ using Microsoft.AspNetCore.Authentication;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.AspNetCore.Components.Server;
+
 namespace AthenaResturantWebAPI
 {
     public class Program
@@ -45,6 +49,8 @@ namespace AthenaResturantWebAPI
 
             // JwtService
             builder.Services.AddScoped<JwtService>();
+            // Adding SalesService
+            builder.Services.AddScoped<ISalesService, SalesService>();
 
 
             // AddScoped for ProductServices
@@ -58,16 +64,6 @@ namespace AthenaResturantWebAPI
 
 
             // CORS configuration
-            //builder.Services.AddCors(options =>
-            //{
-            //    options.AddDefaultPolicy(builder =>
-            //    {
-            //        builder.AllowAnyOrigin()
-            //               .AllowAnyMethod()
-            //               .AllowAnyHeader();
-            //    });
-            //});
-
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAnyOrigin",
@@ -90,6 +86,15 @@ namespace AthenaResturantWebAPI
             .AddRoles<IdentityRole>()  // Add this line to enable roles
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+
+
+            // Add authentication state provider
+            builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
+
+            // Add IHttpContextAccessor
+            builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+
 
             using (var scope = builder.Services.BuildServiceProvider().CreateScope())
             {
@@ -125,6 +130,7 @@ namespace AthenaResturantWebAPI
             // CORS middleware
             app.UseCors();
 
+            app.UseAuthentication(); 
             app.UseAuthorization();
 
             app.MapControllers();
