@@ -3,7 +3,9 @@
 @using BlazorAthenaFrontend.Models
 @inject CartService CartService
 @inject BlazorAthenaFrontend.Services.CartService CartService
-
+@inject BlazorAthenaFrontend.Services.TokenService TokenService
+@inject BlazorAthenaFrontend.Services.JwtDecoderService JwtDecoderService
+@using System.Security.Claims
 @inject System.Net.Http.HttpClient httpClient
 
 
@@ -40,9 +42,11 @@
     double totalAmount = 0;
     bool orderPlaced = false;
     DateTime timeStamp;
-    int currentUser;
+    string currentUser;
     string userInputSummary = string.Empty;
     int addedOrderId = -1; //will catch the ID of newly added order
+    private string jwtToken;
+    private ClaimsPrincipal claimsPrincipal;
 
     private void CalculateTotalAmount()
     {
@@ -67,18 +71,20 @@
     {
         CalculateTotalAmount();
         base.OnInitialized();
+        jwtToken = TokenService.Token;
+        currentUser = CurrentUserService.GetCurrentUserFromToken(jwtToken);
     }
+
     private async Task PlaceOrder()
     {
         orderPlaced = true;
         timeStamp = DateTime.Now;
-        currentUser = 1;
 
         var order = new
         {
             UserId = currentUser,
-            TotalAmount = totalAmount,
-            Comment = userInputSummary,
+            SaleAmount = totalAmount,
+        Comment = userInputSummary,
             OrderLines = CartService.OrderLines.Select(ol => new
             {
                 ProductId = ol.ProductID,
@@ -91,7 +97,9 @@
             // Send the main order
             await SendOrder("https://localhost:7088/api/Order", order);
 
-            CartService.AddOrderLine(currentUser, addedOrderId, CartService.SelectedProducts);
+            totalAmount = CartService.ClearCart();
+
+            CartService.AddOrderLine(addedOrderId, CartService.SelectedProducts);
             // Send the (grouped) order lines
             foreach (var orderLine in CartService.OrderLines)
             {
@@ -109,6 +117,7 @@
             Console.WriteLine($"Error placing order: {ex.Message}");
         }
     }
+    
 
     private async Task SendOrder(string endpoint, object order)
     {
@@ -155,7 +164,7 @@
         }
     }
 }
-}
+
 
 <h3>Total amount: @totalAmount SEK</h3>
 
@@ -164,7 +173,7 @@
 <br />
 @if (orderPlaced)
 {
-    <i style="color: red">Waiting for approval. Order can still be altered.</i>
+    <i style="color: red">Waiting for approval. Order can still be altered under "My orders".</i>
     <br />
     <i>You placed your order at @timeStamp</i>
 }

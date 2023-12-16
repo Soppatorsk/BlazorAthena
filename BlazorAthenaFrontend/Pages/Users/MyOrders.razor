@@ -1,0 +1,139 @@
+﻿@using BlazorAthenaFrontend.Models
+@inject HttpClient httpClient
+@using System.Security.Claims
+@using BlazorAthenaFrontend.Services;
+@inject BlazorAthenaFrontend.Services.TokenService TokenService
+@inject BlazorAthenaFrontend.Services.JwtDecoderService JwtDecoderService
+
+
+@page "/MyOrders"
+@code {
+    private List<Order> usersOrderList;
+    private List<Product> productList;
+    private List<OrderLine> orderLineList;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var jwtToken = TokenService.Token;
+        var currentUser = CurrentUserService.GetCurrentUserFromToken(jwtToken);
+
+        var orderList = await httpClient.GetFromJsonAsync<List<Order>>("https://localhost:7088/api/Order");
+        productList = await httpClient.GetFromJsonAsync<List<Product>>("https://localhost:7088/api/Product");
+        orderLineList = await httpClient.GetFromJsonAsync<List<OrderLine>>("https://localhost:7088/api/OrderLine");
+
+        usersOrderList = orderList
+            .Where(order => order.UserID == currentUser)
+            .ToList();
+
+        List<OrderLine> usersOrderLineList = new List<OrderLine>();
+
+        // Fetch OrderLines where OrderID matches for each order in usersOrderList
+        foreach (var order in usersOrderList)
+        {
+            var orderLinesForOrder = orderLineList
+                .Where(ol => ol.OrderID == order.ID)
+                .ToList();
+
+            // Add the fetched order lines to the usersOrderLineList
+            usersOrderLineList.AddRange(orderLinesForOrder);
+
+
+        // Fetch OrderLines and associated Products for each order
+        // foreach (var order in usersOrderList)
+        // {
+        //     order.OrderLines = orderLineList
+        //         .Where(orderLine => orderLine.OrderID == order.ID)
+        //         .ToList();
+
+        //     // Fetch Product details for each OrderLine
+        //     foreach (var orderLine in order.OrderLines)
+        //     {
+        //         orderLine.Product = productList
+        //             .FirstOrDefault(product => product.ID == orderLine.ProductID);
+        //     }
+         }
+
+        foreach (var order in usersOrderList)
+        {
+            order.OrderLines = orderLineList
+                .Where(orderLine => orderLine.OrderID == order.ID)
+                .ToList();
+
+            // Fetch Product details for each OrderLine
+            foreach (var orderLine in order.OrderLines)
+            {
+                orderLine.Product = productList
+                    .FirstOrDefault(product => product.ID == orderLine.ProductID);
+            }
+        }
+
+    }
+}
+
+@if (usersOrderList != null)
+{
+    <style>
+        .accordion {
+            display: flex;
+            flex-direction: column;
+            width: 300px;
+        }
+
+        .accordion-item {
+            border: 1px solid #ddd;
+            margin-bottom: 5px;
+        }
+
+        .accordion-header {
+            padding: 10px;
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 10px;
+        }
+    </style>
+
+    <div class="accordion">
+        @foreach (var order in usersOrderList)
+        {
+            <div class="accordion-item">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    Order ID: @order.ID
+                </div>
+                <div class="accordion-content">
+                    <!-- Display order details here -->
+                    <p>User ID: @order.UserID</p>
+                    <p>Sale Amount: @order.SaleAmount</p>
+
+                    <!-- Display OrderLines for the current order -->
+                    <div>
+                        @foreach (var orderLine in order.OrderLines)
+                        {
+                            <p>Product: @orderLine.Product.Name, Quantity: @orderLine.Quantity</p>
+                            <!-- Add more details as needed -->
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <script>
+        function toggleAccordion(element) {
+            var content = element.nextElementSibling;
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
+            }
+        }
+    </script>
+}
+else
+{
+    <p>Loading...</p>
+}

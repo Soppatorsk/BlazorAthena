@@ -1,18 +1,28 @@
 ﻿@using BlazorAthenaFrontend.Models
 @inject HttpClient httpClient
+@using System.Security.Claims
+
+
 @page "/foodmenu"
 @code {
     private List<Product> productList;
     private List<Food> foodList;
     private List<Drink> drinkList;
+    private List<Order> orderList;
+    private string jwtToken;
+    private ClaimsPrincipal claimsPrincipal;
+
 
     protected override async Task OnInitializedAsync()
     {
         productList = await httpClient.GetFromJsonAsync<List<Product>>("https://localhost:7088/api/Product");
         foodList = await httpClient.GetFromJsonAsync<List<Food>>("https://localhost:7088/api/Food");
         drinkList = await httpClient.GetFromJsonAsync<List<Drink>>("https://localhost:7088/api/Drink");
+        orderList = await httpClient.GetFromJsonAsync<List<Order>>("https://localhost:7088/api/Order");
     }
 }
+
+
 
 
             <form asp-action="current-user1">
