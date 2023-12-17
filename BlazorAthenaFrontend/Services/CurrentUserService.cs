@@ -21,5 +21,22 @@ namespace BlazorAthenaFrontend.Services
 
             return null;
         }
+
+        public static string GetCurrentUserObjectFromToken(string token)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+
+            foreach (var claim in jsonToken?.Claims)
+            {
+                if (claim.Type == "email")
+                {
+                    return claim.Value;
+                    break;
+                }
+            }
+
+            return null;
+        }
     }
 }

@@ -149,8 +149,8 @@ namespace BlazorAthenaFrontend.Areas.Identity.Pages.Account
                 var client = new HttpClient();
                 client.BaseAddress = new Uri("https://localhost:7088");
 
-                // Adjust the URL to the endpoint in your AccountController responsible for token generation
-                var response = await client.PostAsync("/login", new StringContent(JsonConvert.SerializeObject(new { Email = email, Password = password }), Encoding.UTF8, "application/json"));
+                // Adjust the URL to the endpoint in your IdentityController responsible for token generation
+                var response = await client.PostAsync("/api/Identity/token", new StringContent(JsonConvert.SerializeObject(new { Email = email, Password = password }), Encoding.UTF8, "application/json"));
 
                 if (response.IsSuccessStatusCode)
                 {
