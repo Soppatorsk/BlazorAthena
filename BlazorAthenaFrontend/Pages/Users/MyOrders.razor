@@ -22,7 +22,7 @@
         orderLineList = await httpClient.GetFromJsonAsync<List<OrderLine>>("https://localhost:7088/api/OrderLine");
 
         usersOrderList = orderList
-            .Where(order => order.UserID == currentUser)
+            .Where(order => order.UserID == currentUser && order.Accepted == true)
             .ToList();
 
         // Fetch OrderLines and associated Products for each order
@@ -39,6 +39,9 @@
                     .FirstOrDefault(product => product.ID == orderLine.ProductID);
             }
         }
+        var currentOrder = orderList
+            .Where(order => order.UserID == currentUser && order.Accepted == false)
+            .ToList();
     }
 }
 
