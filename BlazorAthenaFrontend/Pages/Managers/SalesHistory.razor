@@ -6,6 +6,7 @@
 @using BlazorAthenaFrontend.Services
 @using BlazorAthenaFrontend.Models
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
+@using System.Net.Http.Headers;
 
 
 <!-- Loading state -->
@@ -35,8 +36,6 @@ else
     {
         try
         {
-
-
             // Retrieve the JWT token from the TokenService
             var jwtToken = TokenService.Token;
 
@@ -47,6 +46,11 @@ else
             if (!string.IsNullOrEmpty(jwtToken) && currentUser != null)
             {
                 // Logic to handle the authenticated user
+
+                // Call the API endpoint to get sales history
+
+                // Add the JWT token to the request headers
+                HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
                 // Call the API endpoint to get sales history
                 salesHistory = await HttpClient.GetFromJsonAsync<List<SalesData>>("https://localhost:7088/api/sales/history?timeFrame=week");
@@ -69,4 +73,5 @@ else
 
         base.OnInitialized();
     }
+
 }
