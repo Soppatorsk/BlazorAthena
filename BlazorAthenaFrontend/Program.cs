@@ -63,6 +63,10 @@ namespace BlazorAthenaFrontend
             });
             builder.Services.AddScoped<CartService>();
             builder.Services.AddScoped<UserService>();
+            builder.Services.AddHttpClient<UserService>(client =>
+            {
+                client.BaseAddress = new Uri("https://localhost:7088/");
+            });
 
             var app = builder.Build();
 

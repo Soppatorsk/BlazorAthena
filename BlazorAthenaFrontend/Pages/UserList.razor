@@ -1,28 +1,14 @@
-﻿@using BlazorAthenaFrontend.Services;
+﻿@page "/users"
+@using BlazorAthenaFrontend.Services;
 @using BlazorAthenaFrontend.Data.Identity;
-@page "/users"
-@inject HttpClient httpClient
+@inject HttpClient Http
 @inject UserService UserService
 @inject NavigationManager NavigationManager
+@using BlazorAthenaFrontend.Models
 
-<h3>User List</h3>
+<h3>User Roles</h3>
 
-@code {
-    private List<ApplicationUser> users;
-
-    protected override async Task OnInitializedAsync()
-    {
-        users = await httpClient.GetFromJsonAsync<List<ApplicationUser>>("https://localhost:7088/fetchusers");
-        //users = await UserService.FetchUsersAsync();
-    }
-
-    void NavigateToEditPage(string userId)
-    {
-        NavigationManager.NavigateTo($"/edituser/{userId}");
-    }
-}
-
-@if (users == null)
+@if (usersWithRoles == null)
 {
     <p><em>Loading...</em></p>
 }
@@ -32,26 +18,38 @@ else
         <thead>
             <tr>
                 <th>Email</th>
-                <th>UserName</th>
-                <th>Actions</th>
-                <!-- Add other properties as needed -->
+                <th>Role</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var user in users)
+            @foreach (var userRole in usersWithRoles)
             {
                 <tr>
-                    <td>@user.Email</td>
-                    <td>@user.UserName</td>
+                    <td>@userRole.email</td>
+                    <td>@userRole.role</td>
                     <td>
-                        <button @onclick="() => NavigateToEditPage(user.Id)">Edit</button>
+                        <button @onclick="() => EditUser(userRole.userId)">Edit</button>
                     </td>
-                    <!-- Add other properties as needed -->
                 </tr>
             }
         </tbody>
     </table>
 }
 
+@code {
+    private List<GetUserRoleModel> usersWithRoles;
 
+    protected override async Task OnInitializedAsync()
+    {
+        var client = new HttpClient();
+        client.BaseAddress = new Uri("https://localhost:7088");
+        usersWithRoles = await UserService.FetchUsersAsync();
+        //usersWithRoles = await UserService.GetFromJsonAsync<List<GetUserRoleModel>>("/fetchusersroles");
+    }
 
+    private void EditUser(string userId)
+    {
+        NavigationManager.NavigateTo($"/edituser/{userId}");
+    }
+}
