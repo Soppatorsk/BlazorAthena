@@ -12,7 +12,6 @@
     private List<Product> productList;
     private List<OrderLine> orderLineList;
 
-
     protected override async Task OnInitializedAsync()
     {
         var jwtToken = TokenService.Token;
@@ -26,34 +25,7 @@
             .Where(order => order.UserID == currentUser)
             .ToList();
 
-        List<OrderLine> usersOrderLineList = new List<OrderLine>();
-
-        // Fetch OrderLines where OrderID matches for each order in usersOrderList
-        foreach (var order in usersOrderList)
-        {
-            var orderLinesForOrder = orderLineList
-                .Where(ol => ol.OrderID == order.ID)
-                .ToList();
-
-            // Add the fetched order lines to the usersOrderLineList
-            usersOrderLineList.AddRange(orderLinesForOrder);
-
-
         // Fetch OrderLines and associated Products for each order
-        // foreach (var order in usersOrderList)
-        // {
-        //     order.OrderLines = orderLineList
-        //         .Where(orderLine => orderLine.OrderID == order.ID)
-        //         .ToList();
-
-        //     // Fetch Product details for each OrderLine
-        //     foreach (var orderLine in order.OrderLines)
-        //     {
-        //         orderLine.Product = productList
-        //             .FirstOrDefault(product => product.ID == orderLine.ProductID);
-        //     }
-         }
-
         foreach (var order in usersOrderList)
         {
             order.OrderLines = orderLineList
@@ -67,7 +39,6 @@
                     .FirstOrDefault(product => product.ID == orderLine.ProductID);
             }
         }
-
     }
 }
 
@@ -81,7 +52,7 @@
         }
 
         .accordion-item {
-            border: 1px solid #ddd;
+            border: 1px solid purple;
             margin-bottom: 5px;
         }
 
@@ -102,21 +73,18 @@
         {
             <div class="accordion-item">
                 <div class="accordion-header" onclick="toggleAccordion(this)">
-                    Order ID: @order.ID
+                    Receipt nr#: @order.ID Date: @order.TimeStamp.ToString("yyyy-MM-dd HH:mm:ss")
                 </div>
                 <div class="accordion-content">
-                    <!-- Display order details here -->
-                    <p>User ID: @order.UserID</p>
-                    <p>Sale Amount: @order.SaleAmount</p>
-
-                    <!-- Display OrderLines for the current order -->
-                    <div>
-                        @foreach (var orderLine in order.OrderLines)
-                        {
-                            <p>Product: @orderLine.Product.Name, Quantity: @orderLine.Quantity</p>
-                            <!-- Add more details as needed -->
-                        }
-                    </div>
+                    @foreach (var orderLine in order.OrderLines)
+                    {
+                        <p>
+                            @orderLine.Product.Name, Quantity: @orderLine.Quantity
+                            <br />Price per product: @orderLine.Product.Price
+                            <br>VAT @orderLine.Product.VAT%
+                        </p>
+                    }
+                    <p>Total Amount: @order.SaleAmount SEK</p>
                 </div>
             </div>
         }

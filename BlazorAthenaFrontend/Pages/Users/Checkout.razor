@@ -1,7 +1,6 @@
 ﻿@page "/checkout"
 @using BlazorAthenaFrontend.Services
 @using BlazorAthenaFrontend.Models
-@inject CartService CartService
 @inject BlazorAthenaFrontend.Services.CartService CartService
 @inject BlazorAthenaFrontend.Services.TokenService TokenService
 @inject BlazorAthenaFrontend.Services.JwtDecoderService JwtDecoderService
@@ -97,7 +96,7 @@
             // Send the main order
             await SendOrder("https://localhost:7088/api/Order", order);
 
-            totalAmount = CartService.ClearCart();
+            //totalAmount = CartService.ClearCart();
 
             CartService.AddOrderLine(addedOrderId, CartService.SelectedProducts);
             // Send the (grouped) order lines
