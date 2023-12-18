@@ -30,7 +30,7 @@
 
         public void AddOrderLine(int addedOrderId, List<Product> SelectedProducts) //Kolla på detta. Den ska ju ta quantity samt ALLA enskilda produkter (bara samma en gång)
         {
-            var groupedProducts = SelectedProducts
+            var groupedProducts = SelectedProducts //HÄR DET SMÄLLER
             .GroupBy(p => p.ID)
             .Select(group => new
             {
