@@ -27,11 +27,14 @@ namespace AthenaResturantWebAPI
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddControllers();
             // Configure JWT authentication
-            var jwtSecretKey = Encoding.ASCII.GetBytes("your-secret-key");
+            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+            var jwtSecretKey = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]);
+
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
             })
             .AddJwtBearer(options =>
             {
@@ -39,14 +42,18 @@ namespace AthenaResturantWebAPI
                 options.SaveToken = true;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtSettings["Issuer"],
+                    ValidAudience = jwtSettings["Audience"],
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
                     IssuerSigningKey = new SymmetricSecurityKey(jwtSecretKey),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+
                 };
             });
       
-
+            builder.Services.AddAuthorization();
             // JwtService
             builder.Services.AddScoped<JwtService>();
             // Adding SalesService
@@ -134,7 +141,7 @@ namespace AthenaResturantWebAPI
             app.UseAuthorization();
 
             app.MapControllers();
-
+             
             app.MapSubCategoryEndpoints();
 
             app.MapProductEndpoints();

@@ -1,5 +1,6 @@
 ﻿using BlazorAthenaFrontend.Models;
-
+using BlazorAthenaFrontend.Services;
+using Newtonsoft.Json.Linq;
 public class SalesApiService
 {
     private readonly HttpClient _httpClient;
@@ -11,6 +12,7 @@ public class SalesApiService
 
     public async Task<List<SalesData>> GetSalesHistory(string timeFrame)
     {
+
         try
         {
             // Make the API call

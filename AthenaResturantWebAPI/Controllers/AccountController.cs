@@ -8,6 +8,8 @@ using AthenaResturantWebAPI.Data.AppUser;
 using AthenaResturantWebAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
+using System.IdentityModel.Tokens.Jwt;
 
 
 public class AccountController : ControllerBase
@@ -22,7 +24,17 @@ public class AccountController : ControllerBase
         _userManager = userManager;
         _jwtService = jwtService;
     }
+    public ClaimsPrincipal DecodeToken(string token)
+    {
+        // Create an instance of JwtSecurityTokenHandler to handle JWT tokens
+        var handler = new JwtSecurityTokenHandler();
 
+        // Read and parse the input JWT token
+        var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+
+        // Create a new ClaimsPrincipal using the claims extracted from the JWT token
+        return new ClaimsPrincipal(new ClaimsIdentity(jsonToken?.Claims));
+    }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginViewModel model)
@@ -33,17 +45,28 @@ public class AccountController : ControllerBase
 
             if (result.Succeeded)
             {
-             
-                // Authentication succeeded
                 var user = await _userManager.FindByEmailAsync(model.Email);
                 var roles = await _userManager.GetRolesAsync(user);
 
-                // Generate the JWT token
-                var token = _jwtService.GenerateJwtToken(user.Id, user.Email, roles.ToList());
+                if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
+                {
+                    return Unauthorized();
+                }
 
+                // Generate the JWT token
+                var token = _jwtService.GenerateJwtToken(user, roles);
+                
+                // Set the authentication cookie or token in the response
+                Response.Cookies.Append("Authorization", $"Bearer {token}", new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    // You may need to adjust other options based on your security requirements
+                });
+                var decode = DecodeToken(token);
                 // Return the JWT token directly
                 return Ok(new { Token = token });
-
             }
             else
             {
@@ -56,12 +79,7 @@ public class AccountController : ControllerBase
         return BadRequest("Invalid model");
     }
 
-    /*
-    [HttpPost("fetchusers")]
-    public async Task<IActionResult> FetchUsers()
-    {
 
-    }*/
 
     [HttpGet("fetchusers")]
     public async Task<IActionResult> FetchUsers([FromServices] UserManager<ApplicationUser> userManager)
@@ -161,68 +179,42 @@ public class AccountController : ControllerBase
     [HttpGet("current-user")]
     public async Task<IActionResult> GetCurrentUserInfo()
     {
-        // Get the user's ID from the claims
-        var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        // Check if the user is authenticated
+        if (User.Identity.IsAuthenticated)
+        {
+            // Get the user's ID from the claims
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (userId == null)
+            if (userId == null)
+            {
+                // User is not authenticated
+                return Unauthorized();
+            }
+
+            // Retrieve the user from UserManager using their ID
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                // User not found
+                return NotFound();
+            }
+
+            // Now 'user' contains the IdentityUser object for the current user
+            return Ok(new
+            {
+                UserId = user.Id,
+                UserName = user.UserName,
+                Email = user.Email,
+                IsAuthenticated = true
+            });
+        }
+        else
         {
             // User is not authenticated
             return Unauthorized();
         }
-
-        // Retrieve the user from UserManager using their ID
-        var user = await _userManager.FindByIdAsync(userId);
-
-        if (user == null)
-        {
-            // User not found
-            return NotFound();
-        }
-
-        // Now 'user' contains the IdentityUser object for the current user
-        return Ok(new
-        {
-            UserId = user.Id,
-            UserName = user.UserName,
-            Email = user.Email,
-        });
     }
 
-    [HttpGet("current-user1")]
-    public async Task<IActionResult> GetCurrentUserInfo1()
-    {
-        // Get the user's ID from the claims
-        var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (userId == null)
-        {
-            // User is not authenticated
-            return Unauthorized();
-        }
-
-        // Retrieve the user from UserManager using their ID
-        var user = await _userManager.FindByIdAsync(userId);
-
-        if (user == null)
-        {
-            // User not found
-            return NotFound();
-        }
-
-        // Retrieve the user's roles
-        var roles = await _userManager.GetRolesAsync(user);
-
-        // Generate the JWT token
-        var token = _jwtService.GenerateJwtToken(user.Id, user.Email, roles.ToList());
-
-        // Now 'user' contains the IdentityUser object for the current user
-        return Ok(new
-        {
-            UserId = user.Id,
-            UserName = user.UserName,
-            Email = user.Email,
-            Token = token,
-            // Add any other properties you want to expose
-        });
-    }
+   
 }
