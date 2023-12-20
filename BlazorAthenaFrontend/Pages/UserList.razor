@@ -1,0 +1,55 @@
+﻿@page "/users"
+@using BlazorAthenaFrontend.Services;
+@using BlazorAthenaFrontend.Data.Identity;
+@inject HttpClient Http
+@inject UserService UserService
+@inject NavigationManager NavigationManager
+@using BlazorAthenaFrontend.Models
+
+<h3>User Roles</h3>
+
+@if (usersWithRoles == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var userRole in usersWithRoles)
+            {
+                <tr>
+                    <td>@userRole.email</td>
+                    <td>@userRole.role</td>
+                    <td>
+                        <button @onclick="() => EditUser(userRole.userId)">Edit</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<GetUserRoleModel> usersWithRoles;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var client = new HttpClient();
+        client.BaseAddress = new Uri("https://localhost:7088");
+        usersWithRoles = await UserService.FetchUsersAsync();
+        //usersWithRoles = await UserService.GetFromJsonAsync<List<GetUserRoleModel>>("/fetchusersroles");
+    }
+
+    private void EditUser(string userId)
+    {
+        NavigationManager.NavigateTo($"/edituser/{userId}");
+    }
+}

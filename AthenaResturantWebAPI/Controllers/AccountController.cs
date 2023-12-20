@@ -88,17 +88,83 @@ public class AccountController : ControllerBase
         return Ok(users);
     }
 
+    [HttpGet("fetchroles")]
 
+    public async Task<IActionResult> FetchRoles([FromServices] RoleManager<IdentityRole> roleManager)
+    {
+        // Get a list of all roles.
+        var roles = await roleManager.Roles.ToListAsync();
 
+        // Return the dictionary in the response.
+        return Ok(roles);
+    }
+
+    [HttpGet("fetchusersroles")]
+    public async Task<IActionResult> FetchUsersRoles([FromServices] UserManager<ApplicationUser> userManager)
+    {
+        // Initialize a new list to hold user data and their roles.
+        var usersWithRoles = new List<object>();
+
+        // Get a list of all users.
+        var users = await userManager.Users.ToListAsync();
+
+        // Iterate over each user.
+        foreach (var user in users)
+        {
+            // Get the role for the current user. Since each user can only have one role,
+            // we use the 'FirstOrDefault' method which will return the first role if the user has one,
+            // or 'null' if the user has no roles.
+            var role = (await userManager.GetRolesAsync(user)).FirstOrDefault();
+
+            // Add an anonymous object containing the user's email and their role to the list.
+            usersWithRoles.Add(new { Email = user.Email, Role = role, UserId = user.Id });
+        }
+
+        // Return the list of users (by email) and their roles in the response.
+        return Ok(usersWithRoles);
+    }
+
+    [HttpGet("users/{userId}")]
+    public async Task<IActionResult> GetUserById([FromRoute] string userId, [FromServices] UserManager<ApplicationUser> userManager)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return NotFound($"User with ID = {userId} not found.");
+        }
+
+        return Ok(user);
+    }
+
+    [HttpGet("users/{userId}/role")]
+    public async Task<IActionResult> GetUserRole([FromRoute] string userId, [FromServices] UserManager<ApplicationUser> userManager)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        var roles = await userManager.GetRolesAsync(user);
+        if (roles.Any())
+        {
+            var role = new IdentityRole { Name = roles.Single() };
+            return Ok(role);
+        }
+        else
+        {
+            return NotFound();
+        }
+    }
 
 
     [HttpPost("editusersroles")]
-    public async Task<IActionResult> EditUsersRoles([FromBody] RoleOutputModel roleOutput, [FromServices] UserManager<ApplicationUser> userManager)
+    public async Task<IActionResult> EditUsersRoles([FromBody] RoleOutputModel roleOutputModel, [FromServices] UserManager<ApplicationUser> userManager)
     {
-        var user = await userManager.FindByNameAsync(roleOutput.UserName);
+        var user = await userManager.FindByNameAsync(roleOutputModel.UserName);
         if (user == null)
         {
-            return NotFound($"User '{roleOutput.UserName}' not found.");
+            return NotFound($"User '{roleOutputModel.UserName}' not found.");
         }
 
         // Get the current roles attached to the user
@@ -112,17 +178,14 @@ public class AccountController : ControllerBase
         }
 
         // Assign the user to the new role
-        var addResult = await userManager.AddToRoleAsync(user, roleOutput.RoleName);
+        var addResult = await userManager.AddToRoleAsync(user, roleOutputModel.RoleName);
         if (!addResult.Succeeded)
         {
             return BadRequest("Failed to add user to role.");
         }
 
-        return Ok($"User '{roleOutput.UserName}' has been assigned to role '{roleOutput.RoleName}'.");
+        return Ok($"User '{roleOutputModel.UserName}' has been assigned to role '{roleOutputModel.RoleName}'.");
     }
-
-
-
 
     [HttpPost("editusers")]
     public async Task<IActionResult> EditUsers([FromBody] ApplicationUser updatedUser, [FromServices] UserManager<ApplicationUser> userManager, [FromServices] RoleManager<IdentityRole> roleManager)
@@ -153,22 +216,8 @@ public class AccountController : ControllerBase
             return BadRequest("User update failed.");
         }
 
-        // Assume userManager is an instance of UserManager<TUser>
-        var oldRole = await userManager.GetRolesAsync(user);
-        var result1 = await userManager.AddToRoleAsync(user, "Manager"); //roleOutput.RoleName
-
-        // Removing a user from a role
-        var result2 = await userManager.RemoveFromRoleAsync(user, oldRole.ToString());
-
-
         return Ok(user);
     }
-
-
-
-
-
-
 
 
 
