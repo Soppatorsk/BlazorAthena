@@ -29,19 +29,47 @@ public static class OrderLineEndpoints
         .WithName("GetOrderLineById")
         .WithOpenApi();
 
-        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int id, OrderLine orderLine, AppDbContext db) =>
+
+        //NEW PUT
+        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int id, OrderLine updatedOrderLine, AppDbContext db) =>
         {
-            var affected = await db.OrderLines
+            var existingOrderLine = await db.OrderLines
                 .Where(model => model.ID == id)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(m => m.ID, orderLine.ID)
-                    .SetProperty(m => m.ProductID, orderLine.ProductID)
-                    .SetProperty(m => m.Quantity, orderLine.Quantity)
-                    );
-            return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
+                .FirstOrDefaultAsync();
+
+            if (existingOrderLine != null)
+            {
+                // Update the properties of the existing order line
+                //existingOrderLine.ProductID = updatedOrderLine.ProductID;
+                existingOrderLine.Quantity = updatedOrderLine.Quantity;
+
+                // Save changes to the database
+                await db.SaveChangesAsync();
+
+                return TypedResults.Ok();
+            }
+
+            return TypedResults.NotFound();
         })
-        .WithName("UpdateOrderLine")
-        .WithOpenApi();
+.WithName("UpdateOrderLine")
+.WithOpenApi();
+
+
+
+        //OLD PUT
+        //group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int id, OrderLine orderLine, AppDbContext db) =>
+        //{
+        //    var affected = await db.OrderLines
+        //        .Where(model => model.ID == id)
+        //        .ExecuteUpdateAsync(setters => setters
+        //            .SetProperty(m => m.ID, orderLine.ID)
+        //            .SetProperty(m => m.ProductID, orderLine.ProductID)
+        //            .SetProperty(m => m.Quantity, orderLine.Quantity)
+        //            );
+        //    return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
+        //})
+        //.WithName("UpdateOrderLine")
+        //.WithOpenApi();
 
         //group.MapPost("/", async (OrderLine orderLine, AppDbContext db) =>
         //{
