@@ -61,7 +61,6 @@
     }
 
 
-
     private void RemoveProduct(Product product) // same as above, but removes ie -
     {
         CartService.SelectedProducts.Remove(product);
@@ -167,9 +166,8 @@
     }
 
     private async Task AlterOrder()
-    {
-        clickedAlterOrder = true;
 
+    {
         var productList = await httpClient.GetFromJsonAsync<List<Product>>("https://localhost:7088/api/Product");
 
         var orderLines = await httpClient.GetFromJsonAsync<List<OrderLine>>("https://localhost:7088/api/OrderLine");
@@ -182,7 +180,7 @@
             .ToList();
 
         // Iterate through each current order
-        foreach (var order in currentOrders)
+        foreach (var order in currentOrders) //FEL HÄR, DEN UPPDATERAR INTE MED NYTT??
         {
             var orderLinesForOrder = orderLines
                 .Where(orderLine => orderLine.OrderID == order.ID)
@@ -200,8 +198,15 @@
                 }
             }
         }
-
-        UpdateCurrentOrder();
+        var groupedProducts = CartService.SelectedProducts
+        .GroupBy(product => product.ID)
+        .Select(group => new
+        {
+            ProductId = group.Key,
+            Quantity = group.Count()
+        })
+        .ToList();
+        clickedAlterOrder = true; 
     }
 
     @code {
@@ -210,6 +215,17 @@
         {
             if (addedOrderId != -1)
             {
+                // Group selected products by type and sum quantities
+                var groupedProducts = CartService.SelectedProducts
+                    .GroupBy(product => product.ID)
+                    .Select(group => new
+                    {
+                        ProductId = group.Key,
+                        Quantity = group.Count()
+                    })
+                    .ToList();
+
+
                 var orderToUpdate = new
                 {
                     ID = addedOrderId,
@@ -217,12 +233,35 @@
                     SaleAmount = totalAmount,
                     Comment = userInputSummary,
                     Accepted = false,
-                    OrderLines = CartService.OrderLines.Select(ol => new
-                    {
-                        ProductId = ol.ProductID,
-                        Quantity = ol.Quantity
-                    }).ToList()
+                    //OrderLines = new List<object>()  // Create a list to hold individual order lines, doesn't really work?
                 };
+
+                // Create order line for each group
+                // foreach (var groupedProduct in groupedProducts)
+                // {
+                //     var orderLine = new
+                //     {
+                //         ProductID = groupedProduct.ProductId,
+                //         Quantity = groupedProduct.Quantity
+                //     };
+                //     orderToUpdate.OrderLines.Add(orderLine);
+                // }
+
+                DeleteOldOrderLines(addedOrderId);
+
+                List<OrderLine> OrderLines = new List<OrderLine>();
+
+                foreach (var groupedProduct in groupedProducts)
+                {
+                    var orderLine = new OrderLine
+                    {
+                        ProductID = groupedProduct.ProductId,
+                        Quantity = groupedProduct.Quantity
+                    };
+                    OrderLines.Add(orderLine);
+                }
+
+                AddNewOrderLines(addedOrderId, OrderLines);
 
                 try
                 {
@@ -249,6 +288,61 @@
             }
         }
 
+        private async Task DeleteOldOrderLines(int addedOrderId)
+        {
+            try
+            {
+                // Delete order lines associated with the order
+                var deleteOrderLinesEndpoint = $"https://localhost:7088/api/OrderLine/DeleteByOrder/{addedOrderId}";
+                var deleteOrderLinesResponse = await httpClient.DeleteAsync(deleteOrderLinesEndpoint);
+
+                if (deleteOrderLinesResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Order lines deleted successfully!");
+
+                    // // Now, delete the order
+                    // var deleteOrderEndpoint = $"https://localhost:7088/api/Order/{addedOrderId}";
+                    // var deleteOrderResponse = await httpClient.DeleteAsync(deleteOrderEndpoint);
+
+                    // if (deleteOrderResponse.IsSuccessStatusCode)
+                    // {
+                    //     Console.WriteLine("Order deleted successfully!");
+
+                    //     //CartService.ClearCart();
+                    // }
+                    // else
+                    // {
+                    //     Console.WriteLine($"Error deleting order. Status code: {deleteOrderResponse.StatusCode}");
+                    // }
+                }
+                else
+                {
+                    Console.WriteLine($"Error deleting order lines. Status code: {deleteOrderLinesResponse.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting order: {ex.Message}");
+            }
+
+
+
+        }
+
+        private async Task AddNewOrderLines(int addedOrderId, List<OrderLine> OrderLines)
+        {
+           
+            CartService.AddOrderLine(addedOrderId, CartService.SelectedProducts);
+            // Send the (grouped) order lines
+            foreach (var orderLine in CartService.OrderLines)
+            {
+                await SendOrderLine("https://localhost:7088/api/OrderLine", orderLine);
+            }
+        }
+
+        }
+
+
     }
 
 }
@@ -271,7 +365,13 @@
     </button>
     @if (clickedAlterOrder)
     {
-        //more to come
+        //om man har klickat på AlterOrder, så ska det uppdatera existerande order, ej skapa ny
+        <button style="background-color: darkseagreen; color: white;"
+        @onclick="UpdateCurrentOrder">
+            Send updates
+        </button>
+        
+
     }
 
 }

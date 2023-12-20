@@ -146,12 +146,11 @@ namespace AthenaResturantWebAPI
 
             app.MapProductEndpoints();
 
-                        app.MapOrderEndpoints();
+            app.MapOrderEndpoints();
 
-                        app.MapOrderLineEndpoints();
+            app.MapOrderLineEndpoints();
 
-                        
-            
+
             app.Run();
         }
     }

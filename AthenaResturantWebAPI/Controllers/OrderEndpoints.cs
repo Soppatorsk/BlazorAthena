@@ -29,23 +29,31 @@ public static class OrderEndpoints
         .WithName("GetOrderById")
         .WithOpenApi();
 
-        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int id, Order order, AppDbContext db) =>
+        //this works in swagger now
+        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int id, Order updatedOrder, AppDbContext db) =>
         {
-            var affected = await db.Orders
-                .Where(model => model.ID == id)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(m => m.ID, order.ID)
-                    .SetProperty(m => m.Comment, order.Comment)
-                    .SetProperty(m => m.Accepted, order.Accepted)
-                    .SetProperty(m => m.TimeStamp, order.TimeStamp)
-                    .SetProperty(m => m.KitchenComment, order.KitchenComment)
-                    .SetProperty(m => m.Delivered, order.Delivered)
-                    .SetProperty(m => m.SaleAmount, order.SaleAmount)
-                    );
+            var existingOrder = await db.Orders
+                .FirstOrDefaultAsync(model => model.ID == id);
+
+            if (existingOrder == null)
+            {
+                return TypedResults.NotFound();
+            }
+
+            // Update only the necessary properties
+            existingOrder.Comment = updatedOrder.Comment;
+            existingOrder.Accepted = updatedOrder.Accepted;
+            existingOrder.TimeStamp = updatedOrder.TimeStamp;
+            existingOrder.KitchenComment = updatedOrder.KitchenComment;
+            existingOrder.Delivered = updatedOrder.Delivered;
+            existingOrder.SaleAmount = updatedOrder.SaleAmount;
+
+            var affected = await db.SaveChangesAsync();
+
             return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
         })
-        .WithName("UpdateOrder")
-        .WithOpenApi();
+          .WithName("UpdateOrder")
+          .WithOpenApi();
 
         group.MapPost("/", async (Order order, AppDbContext db) =>
         {

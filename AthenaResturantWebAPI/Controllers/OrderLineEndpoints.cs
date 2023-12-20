@@ -43,14 +43,34 @@ public static class OrderLineEndpoints
         .WithName("UpdateOrderLine")
         .WithOpenApi();
 
+        //group.MapPost("/", async (OrderLine orderLine, AppDbContext db) =>
+        //{
+        //    db.OrderLines.Add(orderLine);
+        //    await db.SaveChangesAsync();
+        //    return TypedResults.Created($"/api/OrderLine/{orderLine.ID}",orderLine);
+        //})
+        //.WithName("CreateOrderLine")
+        //.WithOpenApi();
         group.MapPost("/", async (OrderLine orderLine, AppDbContext db) =>
         {
-            db.OrderLines.Add(orderLine);
-            await db.SaveChangesAsync();
-            return TypedResults.Created($"/api/OrderLine/{orderLine.ID}",orderLine);
+            try
+            {
+                db.OrderLines.Add(orderLine);
+
+                // Save changes to the database
+                await db.SaveChangesAsync();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error creating order line: {ex.Message}");
+            }
         })
-        .WithName("CreateOrderLine")
-        .WithOpenApi();
+.WithName("CreateOrderLine")
+.WithOpenApi();
+
+
+
 
         group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (int id, AppDbContext db) =>
         {
@@ -61,5 +81,18 @@ public static class OrderLineEndpoints
         })
         .WithName("DeleteOrderLine")
         .WithOpenApi();
+
+        //So one can delete order lines based on the OrderID
+        group.MapDelete("/DeleteByOrder/{orderId}", async Task<Results<Ok, NotFound>> (int orderId, AppDbContext db) =>
+        {
+            var affected = await db.OrderLines
+                .Where(model => model.OrderID == orderId)
+                .ExecuteDeleteAsync();
+            return affected >= 1 ? TypedResults.Ok() : TypedResults.NotFound();
+        })
+        .WithName("DeleteOrderLinesByOrder")
+        .WithOpenApi();
     }
+
+
 }
