@@ -55,14 +55,14 @@ public class AccountController : ControllerBase
 
                 // Generate the JWT token
                 var token = _jwtService.GenerateJwtToken(user, roles);
-                
+
                 // Set the authentication cookie or token in the response
                 Response.Cookies.Append("Authorization", $"Bearer {token}", new CookieOptions
                 {
                     HttpOnly = true,
                     Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    // You may need to adjust other options based on your security requirements
+                    SameSite = SameSiteMode.None
+                                                 
                 });
                 var decode = DecodeToken(token);
                 // Return the JWT token directly
