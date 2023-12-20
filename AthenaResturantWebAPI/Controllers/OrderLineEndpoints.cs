@@ -3,10 +3,16 @@ using AthenaResturantWebAPI.Data.Context;
 using BlazorAthena.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 namespace AthenaResturantWebAPI.Controllers;
+
+//[Authorize(Roles = "Manager")]
 
 public static class OrderLineEndpoints
 {
+    [HttpPost("OrderLine")]
+
     public static void MapOrderLineEndpoints (this IEndpointRouteBuilder routes)
     {
         var group = routes.MapGroup("/api/OrderLine").WithTags(nameof(OrderLine));
@@ -18,7 +24,7 @@ public static class OrderLineEndpoints
         .WithName("GetAllOrderLines")
         .WithOpenApi();
 
-        group.MapGet("/{id}", async Task<Results<Ok<OrderLine>, NotFound>> (int id, AppDbContext db) =>
+        group.MapGet("/{id}",async Task<Results<Ok<OrderLine>, NotFound>> (int id, AppDbContext db) =>
         {
             return await db.OrderLines.AsNoTracking()
                 .FirstOrDefaultAsync(model => model.ID == id)

@@ -1,0 +1,195 @@
+﻿@page "/customreport"
+@inherits LayoutComponentBase
+@inject BlazorAthenaFrontend.Services.TokenService TokenService
+@inject System.Net.Http.HttpClient HttpClient
+@using System.Net.Http.Headers;
+@using BlazorAthenaFrontend.Models;
+@using System.IdentityModel.Tokens.Jwt;
+@using System.Collections.Generic;
+@using Newtonsoft.Json;
+@using System.Linq;
+
+<button @onclick="GenerateReportAsync">Generate Report</button>
+
+@if (!string.IsNullOrEmpty(reportData))
+{
+    <div>
+        <h4>Generated Report</h4>
+        <div>@(new MarkupString(reportData))</div>
+    </div>
+}
+
+@code {
+    private string reportData;
+    private List<Order> orders;
+    private List<OrderLine> orderLines;
+    private List<Product> products;
+    private List<SaleDetails> salesHistory;
+
+    private async Task GenerateReportAsync()
+    {
+        try
+        {
+            // Get the JWT token from your TokenService
+            var jwtToken = TokenService.Token;
+
+            // Set the Authorization header with the JWT token
+            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+            // Call the three endpoints and aggregate the data
+            orderLines = await GetOrderLines();
+            products = await GetProducts();
+            orders = await GetOrders();
+
+            // Calculate sales history
+            salesHistory = CalculateSalesHistory(orderLines, products, orders, DateTime.MinValue, DateTime.MinValue);
+
+            // Example: Concatenate the data into a single string
+            var formattedReport = GenerateFormattedReport(orderLines, products, orders, salesHistory);
+            reportData = formattedReport;
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions, e.g., log or display an error message
+            reportData = $"Error: {ex.Message}";
+        }
+    }
+
+
+    private string GenerateFormattedReport(List<OrderLine> orderLines, List<Product> products, List<Order> orders, List<SaleDetails> salesHistory)
+    {
+        var formattedReport = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Custom Report</title>
+</head>
+<body>
+    <h1>Custom Report</h1>
+
+    <h2>Sales History</h2>
+    <ul>";
+
+        foreach (var sale in salesHistory)
+        {
+            formattedReport += $@"
+        <li>Order ID: {(sale.Order?.ID)},
+            Product ID: {(sale.Product?.ID)},
+            Quantity: {sale.OrderLine.Quantity},
+            Sale Amount: {sale.Product?.Price * sale.OrderLine.Quantity},
+            Product Name: {sale.Product?.Name},
+            Product Price: {sale.Product?.Price},
+            Order Comment: {sale.Order?.Comment},
+            Order Accepted: {sale.Order?.Accepted},
+            Order Timestamp: {sale.Order?.TimeStamp}</li>";
+        }
+
+        formattedReport += @"
+    </ul>
+
+    <h2>Products</h2>
+    <ul>";
+
+        foreach (var product in products)
+        {
+            formattedReport += $@"
+        <li>Name: {product.Name}, Price: {product.Price}, Description: {product.Description}</li>";
+        }
+
+        formattedReport += @"
+    </ul>
+
+    <h2>Orders</h2>
+    <ul>";
+
+        foreach (var order in orders)
+        {
+            formattedReport += $@"
+        <li>Order ID: {order.ID}, Comment: {order.Comment}, Accepted: {order.Accepted}, TimeStamp: {order.TimeStamp}</li>";
+        }
+
+        formattedReport += @"
+    </ul>
+
+    <h2>Order Lines with Details</h2>
+    <ul>
+        @foreach (var sale in salesHistory)
+        {
+            <li>
+                Order ID: @(sale.Order?.ID),
+                Product ID: @(sale.Product?.ID),
+                Quantity: @sale.OrderLine.Quantity,
+                Sale Amount: @(sale.Product?.Price * sale.OrderLine.Quantity),
+                Product Name: @(sale.Product?.Name),
+                Product Price: @(sale.Product?.Price),
+                Order Comment: @(sale.Order?.Comment),
+                Order Accepted: @(sale.Order?.Accepted),
+                Order Timestamp: @(sale.Order?.TimeStamp)
+            </li>
+        }
+    </ul>
+</body>
+</html>";
+
+        return formattedReport;
+    }
+
+    private List<SaleDetails> CalculateSalesHistory(List<OrderLine> orderLines, List<Product> products, List<Order> orders, DateTime startDate, DateTime endDate)
+    {
+        var salesHistory = orders
+            .Join(orderLines,
+                order => order.ID,
+                orderLine => orderLine.OrderID,
+                (order, orderLine) => new { Order = order, OrderLine = orderLine })
+            .Join(products,
+                joined => joined.OrderLine.ProductID,
+                product => product.ID,
+                (joined, product) => new SaleDetails
+                    {
+                        Order = joined.Order,
+                        OrderLine = joined.OrderLine,
+                        Product = product
+                    })
+            .Where(sale =>
+                (startDate == DateTime.MinValue || sale.Order.TimeStamp.Date >= startDate.Date) &&
+                (endDate == DateTime.MinValue || sale.Order.TimeStamp.Date <= endDate.Date))
+            .ToList();
+
+        return salesHistory;
+    }
+
+
+
+    private async Task<List<OrderLine>> GetOrderLines()
+    {
+        using (var client = new HttpClient())
+        {
+            var response = await client.GetAsync("https://localhost:7088/api/OrderLine");
+            response.EnsureSuccessStatusCode();
+            var orderLinesJson = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<OrderLine>>(orderLinesJson);
+        }
+    }
+
+    private async Task<List<Product>> GetProducts()
+    {
+        using (var client = new HttpClient())
+        {
+            var response = await client.GetAsync("https://localhost:7088/api/Product");
+            response.EnsureSuccessStatusCode();
+            var productsJson = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<Product>>(productsJson);
+        }
+    }
+
+    private async Task<List<Order>> GetOrders()
+    {
+        using (var client = new HttpClient())
+        {
+            var response = await client.GetAsync("https://localhost:7088/api/Order");
+            response.EnsureSuccessStatusCode();
+            var ordersJson = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<Order>>(ordersJson);
+        }
+    }
+}

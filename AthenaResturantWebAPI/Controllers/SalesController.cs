@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class SalesController : ControllerBase
@@ -20,6 +20,7 @@ public class SalesController : ControllerBase
 
 
     [HttpGet("history")]
+    [Authorize(Roles = "Manager")]
     public async Task<IActionResult> GetSalesHistory([FromQuery] string timeFrame)
     {
         // Ensure timeFrame is valid and handle accordingly

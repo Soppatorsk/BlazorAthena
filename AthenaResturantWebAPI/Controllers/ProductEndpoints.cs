@@ -4,10 +4,16 @@ using BlazorAthena.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 namespace AthenaResturantWebAPI.Controllers;
+
+//[Authorize(Roles = "Manager")]
 
 public static class ProductEndpoints
 {
+
+    [HttpPost("Product")]
+
     public static void MapProductEndpoints (this IEndpointRouteBuilder routes)
     {
         var group = routes.MapGroup("/api/Product").WithTags(nameof(Product));
@@ -19,7 +25,7 @@ public static class ProductEndpoints
         .WithName("GetAllProducts")
         .WithOpenApi();
 
-        group.MapGet("/{id}",[Authorize(Roles = "Moderator")] async Task<Results<Ok<Product>, NotFound>> (int id, AppDbContext db) =>
+        group.MapGet("/{id}", async Task<Results<Ok<Product>, NotFound>> (int id, AppDbContext db) =>
         {
             return await db.Products.AsNoTracking()
                 .FirstOrDefaultAsync(model => model.ID == id)
@@ -50,6 +56,7 @@ public static class ProductEndpoints
         })
         .WithName("UpdateProduct")
         .WithOpenApi();
+        
 
         group.MapPost("/", async (Product product, AppDbContext db) =>
         {
