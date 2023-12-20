@@ -120,10 +120,10 @@ namespace AthenaResturantWebAPI
 
             var app = builder.Build();
             //app.MapPost("/product", [Authorize] () => "Simon is King").RequireAuthorization();
-            //app.MapGet("/product", [Authorize] () => "Simon is Boss").RequireAuthorization();
+            //app.MapGet("/product", [Authorize] () => "Manager").RequireAuthorization();
             //app.MapPut("/product", [Authorize] () => "Simon is Master").RequireAuthorization();
             //app.MapDelete("/product", [Authorize] () => "Simon is Senpai").RequireAuthorization();
-            // Configure the HTTP request pipeline.
+            // Configure he HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -141,15 +141,14 @@ namespace AthenaResturantWebAPI
             app.UseAuthorization();
 
             app.MapControllers();
-             
+
             app.MapSubCategoryEndpoints();
 
             app.MapProductEndpoints();
 
-                        app.MapOrderEndpoints();
+            app.MapOrderEndpoints();
 
-                        app.MapOrderLineEndpoints();
-
+            app.MapOrderLineEndpoints();
                         
             
             app.Run();
