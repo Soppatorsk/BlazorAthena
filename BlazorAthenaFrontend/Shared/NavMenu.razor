@@ -1,4 +1,58 @@
-﻿
+﻿@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject BlazorAthenaFrontend.Services.TokenService TokenService
+@inject System.Net.Http.HttpClient HttpClient
+@using System.Net.Http.Headers;
+@using BlazorAthenaFrontend.Models;
+@using System.IdentityModel.Tokens.Jwt;
+@using System.Collections.Generic;
+@using Newtonsoft.Json;
+@using System.Linq;
+@using System.Security.Claims;
+
+@code {
+    private IEnumerable<string> userRoles;
+    private bool hasManagerRole;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authenticationState.User;
+
+        // Now you can get user roles
+        userRoles = user.FindAll(ClaimTypes.Role).Select(claim => claim.Value);
+
+        // Call the getRole method to set the Authorization header and check Manager role
+        getRole();
+    }
+
+    private void getRole()
+    {
+        var jwtToken = TokenService.Token;
+
+        // Set the Authorization header with the JWT token if it's not null or empty
+        if (!string.IsNullOrEmpty(jwtToken))
+        {
+            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+            // Use the decoded token to check if the user has the 'Manager' role
+            var decoded = DecodeToken(jwtToken);
+            hasManagerRole = decoded.FindFirstValue("Role") == "Manager";
+        }
+    }
+
+    private ClaimsPrincipal DecodeToken(string token)
+    {
+        // Create an instance of JwtSecurityTokenHandler to handle JWT tokens
+        var handler = new JwtSecurityTokenHandler();
+
+        // Read and parse the input JWT token
+        var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+
+        // Create a new ClaimsPrincipal using the claims extracted from the JWT token
+        return new ClaimsPrincipal(new ClaimsIdentity(jsonToken?.Claims));
+    }
+}
+
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">BlazorAthenaFrontend</a>
@@ -25,22 +79,40 @@
                 <span class="oi oi-clipboard" aria-hidden="true"></span> Food Menu
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="users">
-                <span class="oi oi-clipboard" aria-hidden="true"></span> Users
-            </NavLink>
-        </div>
+
+        @if (hasManagerRole)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="users">
+                    <span class="oi oi-clipboard" aria-hidden="true"></span> Users
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="subs">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> SubCategoryTest
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="customreport">
+                    <span class="oi oi-clipboard" aria-hidden="true"></span> Reports
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="images">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> Upload Image
+                </NavLink>
+            </div>
+        }
+
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="SalesHistory">
                 <span class="oi oi-clipboard" aria-hidden="true"></span> Sales History
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="customreport">
-                <span class="oi oi-clipboard" aria-hidden="true"></span> Reports
-            </NavLink>
-        </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="takeaway">
                 <span class="oi oi-fire" aria-hidden="true"></span> Order takeaway
@@ -61,14 +133,16 @@
                 <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
             </NavLink>
         </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="subs">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Manage Products
+            </NavLink>
+        </div>
+
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="aboutus">
                 <span class="oi oi-map-marker" aria-hidden="true"></span> About us
-            </NavLink>
-        </div>
-         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="subs">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> SubCategoryTest
             </NavLink>
         </div>
     </nav>
