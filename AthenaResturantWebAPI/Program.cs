@@ -120,7 +120,7 @@ namespace AthenaResturantWebAPI
 
             var app = builder.Build();
             //app.MapPost("/product", [Authorize] () => "Simon is King").RequireAuthorization();
-            //app.MapGet("/product", [Authorize] () => "Manager").RequireAuthorization();
+            app.MapGet("/product", [Authorize] () => "Manager").RequireAuthorization();
             //app.MapPut("/product", [Authorize] () => "Simon is Master").RequireAuthorization();
             //app.MapDelete("/product", [Authorize] () => "Simon is Senpai").RequireAuthorization();
             // Configure he HTTP request pipeline.
