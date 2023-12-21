@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <Folder Include="Pages\Admin\" />
+    <Folder Include="Pages\Employees\" />
     <Folder Include="wwwroot\images\" />
   </ItemGroup>
 
