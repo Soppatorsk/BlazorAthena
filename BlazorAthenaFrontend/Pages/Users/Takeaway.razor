@@ -28,6 +28,9 @@
     {
         Console.WriteLine("Purchase clicked");
         await CartService.AddProductToCartAsync(chosenProduct);
+
+        //CartService.SelectedProducts.Add(chosenProduct); will add duplicate -_-
+
     }
 
 }

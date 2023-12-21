@@ -22,6 +22,32 @@ namespace AthenaResturantWebAPI.Controllers
                 .WithName("GetAllOrders")
                 .WithOpenApi();
 
+        //this works in swagger now
+        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int id, Order updatedOrder, AppDbContext db) =>
+        {
+            var existingOrder = await db.Orders
+                .FirstOrDefaultAsync(model => model.ID == id);
+
+            if (existingOrder == null)
+            {
+                return TypedResults.NotFound();
+            }
+
+            // Update only the necessary properties
+            existingOrder.Comment = updatedOrder.Comment;
+            existingOrder.Accepted = updatedOrder.Accepted;
+            existingOrder.TimeStamp = updatedOrder.TimeStamp;
+            existingOrder.KitchenComment = updatedOrder.KitchenComment;
+            existingOrder.Delivered = updatedOrder.Delivered;
+            existingOrder.SaleAmount = updatedOrder.SaleAmount;
+
+            var affected = await db.SaveChangesAsync();
+
+            return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
+        })
+          .WithName("UpdateOrder")
+          .WithOpenApi();
+          
             // Endpoint 2: Get order by ID
             group.MapGet("/{id}", async Task<Results<Ok<Order>, NotFound>> (int id, AppDbContext db) =>
                 await db.Orders.AsNoTracking()
