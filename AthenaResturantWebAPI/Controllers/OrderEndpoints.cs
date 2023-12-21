@@ -59,23 +59,23 @@ namespace AthenaResturantWebAPI.Controllers
                 .WithOpenApi();
 
             // Endpoint 3: Update order
-            group.MapPut("/{id}",  async Task<Results<Ok, NotFound>> (int id, Order order, AppDbContext db) =>
-            {
-                var affected = await db.Orders
-                    .Where(model => model.ID == id)
-                    .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(m => m.ID, order.ID)
-                        .SetProperty(m => m.Comment, order.Comment)
-                        .SetProperty(m => m.Accepted, order.Accepted)
-                        .SetProperty(m => m.TimeStamp, order.TimeStamp)
-                        .SetProperty(m => m.KitchenComment, order.KitchenComment)
-                        .SetProperty(m => m.Delivered, order.Delivered)
-                        .SetProperty(m => m.SaleAmount, order.SaleAmount)
-                    );
-                return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
-            })
-                .WithName("UpdateOrder")
-                .WithOpenApi();
+            //group.MapPut("/{id}",  async Task<Results<Ok, NotFound>> (int id, Order order, AppDbContext db) =>
+            //{
+            //    var affected = await db.Orders
+            //        .Where(model => model.ID == id)
+            //        .ExecuteUpdateAsync(setters => setters
+            //            .SetProperty(m => m.ID, order.ID)
+            //            .SetProperty(m => m.Comment, order.Comment)
+            //            .SetProperty(m => m.Accepted, order.Accepted)
+            //            .SetProperty(m => m.TimeStamp, order.TimeStamp)
+            //            .SetProperty(m => m.KitchenComment, order.KitchenComment)
+            //            .SetProperty(m => m.Delivered, order.Delivered)
+            //            .SetProperty(m => m.SaleAmount, order.SaleAmount)
+            //        );
+            //    return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
+            //})
+            //    .WithName("UpdateOrder")
+            //    .WithOpenApi();
 
             // Endpoint 4: Create order
             group.MapPost("/", async (Order order, AppDbContext db) =>
