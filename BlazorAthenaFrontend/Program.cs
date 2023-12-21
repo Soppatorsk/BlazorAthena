@@ -32,6 +32,12 @@ namespace BlazorAthenaFrontend
                 options.Authority = "https://localhost:7235"; // Authority is the URL of your Identity Server (Blazor Server)
             });
 
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("ManagerPolicy", policy => policy.RequireRole("Manager"));
+                options.AddPolicy("EmployeePolicy", policy => policy.RequireRole("Employee"));
+            });
+
             // Add CORS policy
             builder.Services.AddCors(options =>
             {

@@ -15,6 +15,7 @@
 {
     <div>
         <h4>Generated Report</h4>
+        <p>Enbart Drycker finns i Seeding</p>
         <div>@(new MarkupString(reportData))</div>
     </div>
 }
@@ -70,64 +71,47 @@
     <h2>Sales History</h2>
     <ul>";
 
+        var totalFoodSales = 0.0;
+        var totalDrinkSales = 0.0;
+
         foreach (var sale in salesHistory)
         {
             formattedReport += $@"
-        <li>Order ID: {(sale.Order?.ID)},
-            Product ID: {(sale.Product?.ID)},
-            Quantity: {sale.OrderLine.Quantity},
-            Sale Amount: {sale.Product?.Price * sale.OrderLine.Quantity},
-            Product Name: {sale.Product?.Name},
-            Product Price: {sale.Product?.Price},
-            Order Comment: {sale.Order?.Comment},
-            Order Accepted: {sale.Order?.Accepted},
-            Order Timestamp: {sale.Order?.TimeStamp}</li>";
+    <li>Order ID: {(sale.Order?.ID)},
+        Product ID: {(sale.Product?.ID)},
+        Quantity: {sale.OrderLine.Quantity},
+        Sale Amount: {sale.Product?.Price * sale.OrderLine.Quantity},
+        Product Name: {sale.Product?.Name},
+        Product Price: {sale.Product?.Price},
+        Order Comment: {sale.Order?.Comment},
+        Order Accepted: {sale.Order?.Accepted},
+        Order Timestamp: {sale.Order?.TimeStamp},
+        Category: {sale.Category}</li>";
+
+            // Accumulate total sales for each category
+            if (sale.Category == "Food")
+            {
+                totalFoodSales += sale.Product?.Price * sale.OrderLine.Quantity ?? 0.0;
+            }
+            else if (sale.Category == "Drink")
+            {
+                totalDrinkSales += sale.Product?.Price * sale.OrderLine.Quantity ?? 0.0;
+            }
         }
 
         formattedReport += @"
-    </ul>
+    </ul>";
 
-    <h2>Products</h2>
-    <ul>";
-
-        foreach (var product in products)
-        {
-            formattedReport += $@"
-        <li>Name: {product.Name}, Price: {product.Price}, Description: {product.Description}</li>";
-        }
-
-        formattedReport += @"
-    </ul>
-
-    <h2>Orders</h2>
-    <ul>";
-
-        foreach (var order in orders)
-        {
-            formattedReport += $@"
-        <li>Order ID: {order.ID}, Comment: {order.Comment}, Accepted: {order.Accepted}, TimeStamp: {order.TimeStamp}</li>";
-        }
-
-        formattedReport += @"
-    </ul>
-
-    <h2>Order Lines with Details</h2>
+        // Correct syntax for displaying total sales
+        formattedReport += $@"
+    <h2>Total Sales by Category</h2>
     <ul>
-        @foreach (var sale in salesHistory)
-        {
-            <li>
-                Order ID: @(sale.Order?.ID),
-                Product ID: @(sale.Product?.ID),
-                Quantity: @sale.OrderLine.Quantity,
-                Sale Amount: @(sale.Product?.Price * sale.OrderLine.Quantity),
-                Product Name: @(sale.Product?.Name),
-                Product Price: @(sale.Product?.Price),
-                Order Comment: @(sale.Order?.Comment),
-                Order Accepted: @(sale.Order?.Accepted),
-                Order Timestamp: @(sale.Order?.TimeStamp)
-            </li>
-        }
-    </ul>
+        <li>Food: {totalFoodSales}</li>
+        <li>Drink: {totalDrinkSales}</li>
+    </ul>";
+
+        formattedReport += @"
+    <!-- Rest of the HTML -->
 </body>
 </html>";
 
@@ -148,7 +132,8 @@
                     {
                         Order = joined.Order,
                         OrderLine = joined.OrderLine,
-                        Product = product
+                        Product = product,
+                        Category = (product is Food) ? "Food" : "Drink" // Assign the category based on the type of product
                     })
             .Where(sale =>
                 (startDate == DateTime.MinValue || sale.Order.TimeStamp.Date >= startDate.Date) &&
