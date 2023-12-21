@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AthenaResturantWebAPI.Controllers
 {
-    [Authorize]
+   // [Authorize(Roles = "Manager")]
     public static class OrderEndpoints
     {
         [HttpPost("Order")]
@@ -17,7 +17,7 @@ namespace AthenaResturantWebAPI.Controllers
             var group = routes.MapGroup("/api/Order").WithTags(nameof(Order));
 
             // Endpoint 1: Get all orders
-            group.MapGet("/",  async (AppDbContext db) =>
+            group.MapGet("/", async (AppDbContext db) =>
                 await db.Orders.ToListAsync())
                 .WithName("GetAllOrders")
                 .WithOpenApi();
@@ -59,7 +59,7 @@ namespace AthenaResturantWebAPI.Controllers
                 .WithOpenApi();
 
             // Endpoint 3: Update order
-            group.MapPut("/{id}",  async Task<Results<Ok, NotFound>> (int id, Order order, AppDbContext db) =>
+            group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int id, Order order, AppDbContext db) =>
             {
                 var affected = await db.Orders
                     .Where(model => model.ID == id)
