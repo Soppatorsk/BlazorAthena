@@ -25,7 +25,7 @@ namespace AthenaResturantWebAPI.Controllers
         }
 
         [HttpPost("token")]
-        public async Task<IActionResult> GenerateJwtToken([FromBody] LoginViewModel model)
+        public async Task<IActionResult> PostGenerateJwtToken([FromBody] LoginViewModel model)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
 
@@ -38,25 +38,27 @@ namespace AthenaResturantWebAPI.Controllers
             var token = GenerateToken(user, roles);
 
             //// Decode the token to verify its content
-            //var principal = DecodeToken(token);
-
-            //if (principal != null)
-            //{
-            //    // Token is valid, proceed with your logic
-            //    var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            //    // Do something with userId
-            //    return Ok($"User ID: {userId}");
-            //}
-            //else
-            //{
-            //    // Token is invalid
-            //    return Unauthorized();
-            //}
+            var principal = DecodeToken(token);
+            // IsAuthenticated = True
+            if (principal != null)
+            {
+                // Token is valid, proceed with your logic
+                var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                // Do something with userId
+                return Ok(new { Token = token }); ;
+            }
+            else
+            {
+                // Token is invalid
+                return Unauthorized();
+            }
             return Ok(new { Token = token });
         }
 
         private string GenerateToken(ApplicationUser user, IList<string> roles)
         {
+            var expires = DateTime.Now.AddHours(1);
+            var role = roles[0];
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtSecretKey = Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]);
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -66,9 +68,10 @@ namespace AthenaResturantWebAPI.Controllers
                     new Claim(ClaimTypes.NameIdentifier, user.Id),
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(ClaimTypes.Name, user.UserName),
-                    new Claim(ClaimTypes.Role, string.Join(",", roles)),
+                    new Claim(ClaimTypes.Role, role),
+                    new Claim(ClaimTypes.Authentication, "true")
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["JwtSettings:TokenExpirationInMinutes"])),
+                Expires = expires, 
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(jwtSecretKey), SecurityAlgorithms.HmacSha256Signature),
                 Issuer = _configuration["JwtSettings:Issuer"],
                 Audience = _configuration["JwtSettings:Audience"]
