@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace AthenaResturantWebAPI.Controllers;
 
-[Authorize]
+//[Authorize(Roles = "Manager")]
 
 public static class ProductEndpoints
 {
@@ -25,7 +25,7 @@ public static class ProductEndpoints
         .WithName("GetAllProducts")
         .WithOpenApi();
 
-        group.MapGet("/{id}",  async Task<Results<Ok<Product>, NotFound>> (int id, AppDbContext db) =>
+        group.MapGet("/{id}", async Task<Results<Ok<Product>, NotFound>> (int id, AppDbContext db) =>
         {
             return await db.Products.AsNoTracking()
                 .FirstOrDefaultAsync(model => model.ID == id)
@@ -37,7 +37,7 @@ public static class ProductEndpoints
         .WithOpenApi()
         .RequireAuthorization();
 
-        group.MapPut("/{id}", [Authorize(Roles = "Manager")] async Task<Results<Ok, NotFound>> (int id, Product product, AppDbContext db) =>
+        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int id, Product product, AppDbContext db) =>
         {
             var affected = await db.Products
                 .Where(model => model.ID == id)
@@ -58,7 +58,7 @@ public static class ProductEndpoints
         .WithOpenApi();
         
 
-        group.MapPost("/", [Authorize(Roles = "Manager")] async (Product product, AppDbContext db) =>
+        group.MapPost("/", async (Product product, AppDbContext db) =>
         {
             db.Products.Add(product);
             await db.SaveChangesAsync();
@@ -67,7 +67,7 @@ public static class ProductEndpoints
         .WithName("CreateProduct")
         .WithOpenApi();
 
-        group.MapDelete("/{id}", [Authorize(Roles = "Manager")] async Task<Results<Ok, NotFound>> (int id, AppDbContext db) =>
+        group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (int id, AppDbContext db) =>
         {
             var affected = await db.Products
                 .Where(model => model.ID == id)
