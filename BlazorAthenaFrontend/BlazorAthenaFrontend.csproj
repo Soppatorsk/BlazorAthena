@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="Pages\UserList.razor">
+    <Content Update="Pages\Managers\UserList.razor">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
   </ItemGroup>
