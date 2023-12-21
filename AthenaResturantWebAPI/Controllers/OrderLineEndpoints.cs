@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace AthenaResturantWebAPI.Controllers;
 
-//[Authorize(Roles = "Manager")]
+[Authorize]
 
 public static class OrderLineEndpoints
 {
