@@ -19,9 +19,6 @@ using Newtonsoft.Json;
 using System.Text;
 using BlazorAthenaFrontend.Models;
 using BlazorAthenaFrontend.Services;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using Microsoft.IdentityModel.Tokens;
 
 namespace BlazorAthenaFrontend.Areas.Identity.Pages.Account
 {
@@ -129,10 +126,9 @@ namespace BlazorAthenaFrontend.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("User logged in.");
 
-                    // Call the method in IdentityController to generate and validate JWT token
+                    // Call the method in AccountController to generate and validate JWT token
                     var token = await GetJwtTokenFromAccountController(Input.Email, Input.Password);
 
-                    var detoken = DecodeToken(token);
                     // Store or use the token
                     _tokenService.Token = token;
 
@@ -145,18 +141,6 @@ namespace BlazorAthenaFrontend.Areas.Identity.Pages.Account
 
             // If we got this far, something failed, redisplay form
             return Page();
-        }
-
-        public ClaimsPrincipal DecodeToken(string token)
-        {
-            // Create an instance of JwtSecurityTokenHandler to handle JWT tokens
-            var handler = new JwtSecurityTokenHandler();
-
-            // Read and parse the input JWT token
-            var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
-
-            // Create a new ClaimsPrincipal using the claims extracted from the JWT token
-            return new ClaimsPrincipal(new ClaimsIdentity(jsonToken?.Claims));
         }
         private async Task<string> GetJwtTokenFromAccountController(string email, string password)
         {
@@ -187,8 +171,6 @@ namespace BlazorAthenaFrontend.Areas.Identity.Pages.Account
                 return null;
             }
         }
-
-
 
     }
 }

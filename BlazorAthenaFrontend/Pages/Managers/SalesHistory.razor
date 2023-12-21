@@ -1,18 +1,14 @@
 ﻿@page "/SalesHistory"
+@inject BlazorAthenaFrontend.Services.JwtDecoderService JwtDecoderService
+@using System.Security.Claims
 @inject BlazorAthenaFrontend.Services.TokenService TokenService
-@inject System.Net.Http.HttpClient HttpClient
+@inject System.Net.Http.HttpClient httpClient
+@using BlazorAthenaFrontend.Services
 @using BlazorAthenaFrontend.Models
-@using System.Net.Http.Headers;
+@inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
 
-<h3>Sales History</h3>
 
-<div>
-    <label>Select Date Range:</label>
-    <input type="date" @bind="startDate" />
-    <input type="date" @bind="endDate" />
-    <button @onclick="FilterSales">Apply</button>
-</div>
-
+<!-- Loading state -->
 @if (salesHistory == null)
 {
     <p>Loading...</p>
@@ -20,89 +16,57 @@
 else
 {
     <ul>
-        @foreach (var groupedSale in salesHistoryGrouped)
+        <!-- Display sales history -->
+        @foreach (var sale in salesHistory)
         {
-            <li>
-                Order ID: @groupedSale.Key
-                <ul>
-                    @foreach (var sale in groupedSale)
-                    {
-                        <li>
-                            Product: @sale.Product.Name
-                            Quantity: @sale.OrderLine.Quantity
-                            Order Timestamp: @sale.Order.TimeStamp
-                        </li>
-                    }
-                </ul>
-            </li>
+            <li>@sale.Id - @sale.SaleAmount</li>
         }
     </ul>
 }
 
 @code {
-    private List<Order> orders;
-    private List<OrderLine> orderLines;
-    private List<Product> products;
-    private List<SaleDetails> salesHistory;
+    private List<SalesData> salesHistory;
 
-    // Date range filters
-    private DateTime? startDate;
-    private DateTime? endDate;
-
-    // Grouped sales history
-    private List<IGrouping<int, SaleDetails>> salesHistoryGrouped;
+    // Inject the HttpClient service
+    [Inject]
+    private HttpClient HttpClient { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadSalesHistory();
-    }
-
-    private async Task LoadSalesHistory()
-    {
         try
         {
+
+
+            // Retrieve the JWT token from the TokenService
             var jwtToken = TokenService.Token;
 
-            // Set the Authorization header with the JWT token
-            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+            // Decode the JWT token to extract user information
+            var currentUser = JwtDecoderService.DecodeToken(jwtToken);
 
-            // Make a GET request to the "GetAllOrders" endpoint
-            orders = await HttpClient.GetFromJsonAsync<List<Order>>("https://localhost:7088/api/Order");
+            // Check if the user is authenticated
+            if (!string.IsNullOrEmpty(jwtToken) && currentUser != null)
+            {
+                // Logic to handle the authenticated user
 
-            // Make a GET request to the "GetAllOrderLine" endpoint
-            orderLines = await HttpClient.GetFromJsonAsync<List<OrderLine>>("https://localhost:7088/api/OrderLine");
-
-            // Make a GET request to the "GetAllProducts" endpoint
-            products = await HttpClient.GetFromJsonAsync<List<Product>>("https://localhost:7088/api/Product");
-
-            // Filter sales history based on date range
-            FilterSales();
+                // Call the API endpoint to get sales history
+                salesHistory = await HttpClient.GetFromJsonAsync<List<SalesData>>("https://localhost:7088/api/sales/history?timeFrame=week");
+            }
+            else
+            {
+                // Handle the case where the user is not authenticated
+                // Redirect to the home page if currentUser is empty
+                if (currentUser == null)
+                {
+                    NavigationManager.NavigateTo("/Home");
+                }
+            }
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            // Handle exceptions (e.g., log or display an error message)
-            Console.WriteLine($"Error: {ex.Message}");
+            // Handle the error, log it, or display a user-friendly message
+            Console.WriteLine($"API request failed: {ex.Message}");
         }
-    }
 
-    private void FilterSales()
-    {
-        // Filter sales history based on the selected date range
-        salesHistory = orders
-            .SelectMany(order => orderLines
-                .Where(ol => ol.OrderID == order.ID)
-                .Select(orderLine => new SaleDetails
-                    {
-                        Order = order,
-                        OrderLine = orderLine,
-                        Product = products.FirstOrDefault(p => p.ID == orderLine.ProductID)
-                    }))
-            .Where(sale =>
-                (!startDate.HasValue || sale.Order.TimeStamp.Date >= startDate.Value.Date) &&
-                (!endDate.HasValue || sale.Order.TimeStamp.Date <= endDate.Value.Date))
-            .ToList();
-
-        // Group sales history by Order.ID
-        salesHistoryGrouped = salesHistory.GroupBy(sale => sale.Order.ID).ToList();
+        base.OnInitialized();
     }
 }

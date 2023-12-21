@@ -25,14 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Pages\Admin\" />
     <Folder Include="wwwroot\images\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Update="Pages\UserList.razor">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </Content>
   </ItemGroup>
 
 </Project>
