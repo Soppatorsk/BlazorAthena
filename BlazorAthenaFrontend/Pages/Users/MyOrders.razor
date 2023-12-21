@@ -4,6 +4,7 @@
 @using BlazorAthenaFrontend.Services;
 @inject BlazorAthenaFrontend.Services.TokenService TokenService
 @inject BlazorAthenaFrontend.Services.JwtDecoderService JwtDecoderService
+@inject NavigationManager NavigationManager
 
 @page "/MyOrders"
 @code {
@@ -21,12 +22,7 @@
         try
         {
 
-            //order.Comment = comment; // Update the comment property of the order
-
             var existingOrder = await httpClient.GetFromJsonAsync<Order>($"https://localhost:7088/api/Order/{order.ID}");
-
-
-            //var response = await httpClient.PutAsJsonAsync($"https://localhost:7088/api/Order/{order.ID}", order.Comment);
 
             if (order != null)
             {
@@ -42,12 +38,8 @@
         {
             Console.WriteLine($"Error adding order line: {ex.Message}");
         }
+    }
 
-
-        }
-
-
-    
 
     private void AddProductToOrder()
     {
@@ -81,7 +73,7 @@
 
                 //AddNewOrderLine(newOrderLine);
                 SendOrderLine(newOrderLine);
-                
+
             }
         }
     }
@@ -200,10 +192,34 @@
         }
     }
 
-    private void CancelOrder()
+    private async Task CancelOrder(Order order)
     {
-        // Implement the logic to cancel the order
-        // This can include removing the order from the pendingOrders list, updating the database, etc.
+
+        try
+        {
+            var existingOrder = await httpClient.GetFromJsonAsync<Order>($"https://localhost:7088/api/Order/{order.ID}");
+
+            if (existingOrder != null)
+            {
+
+            var response = await httpClient.DeleteAsync($"https://localhost:7088/api/Order/{order.ID}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                    
+                Console.WriteLine("Order canceled successfully!");
+                    NavigationManager.NavigateTo("/MyOrders");
+            }
+            else
+            {
+                Console.WriteLine($"Failed to cancel order. Status code: {response.StatusCode}");
+            }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error canceling order: {ex.Message}");
+        }
         Console.WriteLine("Order canceled!");
     }
 
@@ -342,7 +358,8 @@
                     <input type="number" id="quantityInput" @bind="selectedQuantity" style="width: 50px;" />
                     <button button style="background-color: mediumpurple; color: white;" @onclick="AddProductToOrder">Add Product to Order</button>
                     <br/>
-                    <button style="background-color: darkred; color: white; margin-top: 10px;" @onclick="CancelOrder">Cancel Order</button>
+                    <button style="background-color: darkred; color: white; margin-top: 10px;" @onclick="@(async () => await CancelOrder(order))">Cancel Order</button>
+
                 </div>
             </div>
         }
