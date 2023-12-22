@@ -59,6 +59,7 @@ namespace AthenaResturantWebAPI
             // Adding SalesService
             builder.Services.AddScoped<ISalesService, SalesService>();
 
+            builder.Services.AddScoped<UserService>();
 
             // AddScoped for ProductServices
             builder.Services.AddScoped<ProductService>();

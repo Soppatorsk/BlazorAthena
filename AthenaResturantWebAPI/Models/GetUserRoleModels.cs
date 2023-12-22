@@ -1,10 +1,9 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace BlazorAthenaFrontend.Models
+namespace AthenaResturantWebAPI.Models
 {
-
-    public class GetUserRoleModel
+    
+    public class GetUserRoleModels
     {
         [Required(ErrorMessage = "UserId is required.")]
         public string UserId { get; set; }

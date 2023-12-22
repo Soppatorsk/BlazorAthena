@@ -4,6 +4,7 @@ using BlazorAthenaFrontend.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using System.Net.Http;
+using BlazorAthenaFrontend.Models;
 
 namespace BlazorAthenaFrontend.Services
 {
