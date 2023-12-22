@@ -10,9 +10,9 @@ using AthenaResturantWebAPI.Data.AppUser;
 
 namespace AthenaResturantWebAPI.Controllers
 {
+	[Authorize]
 
-
-    [ApiController]
+	[ApiController]
     [Route("api/[controller]")]
     public class UserController : ControllerBase
     {

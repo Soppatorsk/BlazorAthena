@@ -3,8 +3,9 @@ using AthenaResturantWebAPI.Data.Context;
 using BlazorAthena.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.AspNetCore.Authorization;
 namespace AthenaResturantWebAPI.Controllers;
-
+[Authorize]
 public static class SubCategoryEndpoints
 {
     public static void MapSubCategoryEndpoints (this IEndpointRouteBuilder routes)

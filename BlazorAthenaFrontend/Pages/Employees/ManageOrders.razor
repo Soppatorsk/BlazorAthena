@@ -6,6 +6,13 @@
 @inject BlazorAthenaFrontend.Services.JwtDecoderService JwtDecoderService
 @inject NavigationManager NavigationManager
 
+@code 
+{
+    /*For Token*/
+}
+@inject System.Net.Http.HttpClient HttpClient
+@using System.Net.Http.Headers;
+
 @page "/manageorders"
 @code {
     private List<Order> usersOrderList;
@@ -21,6 +28,7 @@
     {
         try
         {
+            AddAuthorization();
 
             var existingOrder = await httpClient.GetFromJsonAsync<Order>($"https://localhost:7088/api/Order/{order.ID}");
 
@@ -40,6 +48,21 @@
         }
     }
 
+    private void AddAuthorization()
+    {
+        @code
+        {
+        /*For Token*/
+    }
+    @inject System.Net.Http.HttpClient HttpClient
+
+    @using System.Net.Http.Headers;
+        var jwtToken = TokenService.Token;
+
+        // Set the Authorization header with the JWT token
+        HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+    }
 
     private void AddProductToOrder()
     {
@@ -104,6 +127,7 @@
     {
         try
         {
+            
             var response = await httpClient.PostAsJsonAsync("https://localhost:7088/api/OrderLine", orderLine);
 
             // Check if the request was successful
@@ -174,6 +198,7 @@
 
     private async Task DecreseQuantity(int productId, int orderId)
     {
+   
         // Find the order line to update
         var orderLineToUpdate = orderLineList.FirstOrDefault(ol => ol.ProductID == productId && ol.OrderID == orderId);
 
@@ -249,6 +274,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+
         var jwtToken = TokenService.Token;
         var currentUser = CurrentUserService.GetCurrentUserFromToken(jwtToken);
 

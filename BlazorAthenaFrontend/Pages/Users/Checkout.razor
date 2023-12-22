@@ -6,6 +6,8 @@
 @inject BlazorAthenaFrontend.Services.JwtDecoderService JwtDecoderService
 @using System.Security.Claims
 @inject System.Net.Http.HttpClient httpClient
+@inject System.Net.Http.HttpClient HttpClient
+@using System.Net.Http.Headers;
 
 
 <h3>Checkout</h3>
@@ -72,8 +74,11 @@
         CalculateTotalAmount();
         base.OnInitialized();
         jwtToken = TokenService.Token;
+        HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
         currentUser = CurrentUserService.GetCurrentUserFromToken(jwtToken);
     }
+   
 
     private async Task PlaceOrder()
     {

@@ -1,12 +1,13 @@
 ﻿using AthenaResturantWebAPI.Data.Context;
 using AthenaResturantWebAPI.Services;
 using BlazorAthena.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AthenaResturantWebAPI.Controllers
 {
-    [ApiController]
+	[ApiController]
     [Route("api/[controller]")]
 
     public class DrinkController : Controller

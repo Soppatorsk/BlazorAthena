@@ -2,6 +2,13 @@
 @inject BlazorAthenaFrontend.Services.CartService CartService
 @inject System.Net.Http.HttpClient httpClient
 @using BlazorAthenaFrontend.Models;
+@inject BlazorAthenaFrontend.Services.TokenService TokenService
+@code
+{
+ /*For Token*/
+ }
+ @inject System.Net.Http.HttpClient HttpClient
+ @using System.Net.Http.Headers;
 
 <h3>ProductList</h3>
 
@@ -11,6 +18,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        AddAuthorization();
         productList = await httpClient.GetFromJsonAsync<List<BlazorAthenaFrontend.Models.Product>>("https://localhost:7088/api/Product");
    
         savedProducts.AddRange(productList
@@ -33,6 +41,15 @@
         await CartService.AddProductToCartAsync(chosenProduct);
 
         //CartService.SelectedProducts.Add(chosenProduct); will add duplicate -_-
+
+    }
+    private void AddAuthorization()
+    {
+
+    var jwtToken = TokenService.Token;
+
+    // Set the Authorization header with the JWT token
+    HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
     }
 
