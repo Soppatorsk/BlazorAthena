@@ -6,7 +6,7 @@
 @inject BlazorAthenaFrontend.Services.JwtDecoderService JwtDecoderService
 @inject NavigationManager NavigationManager
 
-@page "/MyOrders"
+@page "/manageorders"
 @code {
     private List<Order> usersOrderList;
     private List<Product> productList;
@@ -17,7 +17,7 @@
     private int selectedOrderId { get; set; }
     private string commentInputValue = "";
 
-    private async Task UpdateOrderComment(Order order, string comment)
+    private async Task UpdateKitchenComment(Order order, string comment)
     {
         try
         {
@@ -26,7 +26,7 @@
 
             if (order != null)
             {
-                order.Comment = comment;
+                order.KitchenComment = comment;
                 var response = await httpClient.PutAsJsonAsync($"https://localhost:7088/api/Order/{order.ID}", order);
             }
             else
@@ -192,6 +192,30 @@
         }
     }
 
+    private async Task AcceptOrder (Order order)
+    {
+        try
+        {
+
+            var existingOrder = await httpClient.GetFromJsonAsync<Order>($"https://localhost:7088/api/Order/{order.ID}");
+
+            if (order != null)
+            {
+                order.Accepted = true;
+                var response = await httpClient.PutAsJsonAsync($"https://localhost:7088/api/Order/{order.ID}", order);
+            }
+            else
+            {
+                Console.WriteLine($"Failed to add order line. Status code:");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding order line: {ex.Message}");
+        }
+
+    }
+
     private async Task CancelOrder(Order order)
     {
 
@@ -202,18 +226,18 @@
             if (existingOrder != null)
             {
 
-            var response = await httpClient.DeleteAsync($"https://localhost:7088/api/Order/{order.ID}");
+                var response = await httpClient.DeleteAsync($"https://localhost:7088/api/Order/{order.ID}");
 
-            if (response.IsSuccessStatusCode)
-            {
-                    
-                Console.WriteLine("Order canceled successfully!");
-                    NavigationManager.NavigateTo("/MyOrders");
-            }
-            else
-            {
-                Console.WriteLine($"Failed to cancel order. Status code: {response.StatusCode}");
-            }
+                if (response.IsSuccessStatusCode)
+                {
+
+                    Console.WriteLine("Order canceled successfully!");
+
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to cancel order. Status code: {response.StatusCode}");
+                }
             }
         }
         catch (Exception ex)
@@ -233,7 +257,7 @@
         orderLineList = await httpClient.GetFromJsonAsync<List<OrderLine>>("https://localhost:7088/api/OrderLine");
 
         usersOrderList = orderList
-            .Where(order => order.UserID == currentUser && order.Accepted == true)
+            .Where(order => order.Accepted == true)
             .ToList();
 
         // Fetch OrderLines and associated Products for each order
@@ -254,7 +278,7 @@
 
         // Fetch pending orders
         pendingOrders = orderList
-            .Where(order => order.UserID == currentUser && order.Accepted == false)
+            .Where(order => order.Accepted == false)
             .ToList();
     }
 }
@@ -275,7 +299,7 @@
             margin-bottom: 5px;
         }
 
-        .accordion-header2{
+        .accordion-header2 {
             padding: 10px;
             background-color: #FFFF8F;
             cursor: pointer;
@@ -303,11 +327,12 @@
                     Pending Order nr#: @order.ID Date: @order.TimeStamp.ToString("yyyy-MM-dd HH:mm:ss")
                 </div>
                 <div class="accordion-content">
-                    <p>Comment: @order.Comment</p>
+                    <p>Customer comment: @order.Comment</p>
+                    <p>Comment to kitchen: @order.KitchenComment</p> 
                     <label for="commentInput">Update Comment:</label>
                     <input type="text" id="commentInput" @bind="commentInputValue" />
 
-                    <button style="background-color: mediumpurple; color: white;" @onclick="() => UpdateOrderComment(order, commentInputValue)">Update Comment</button>
+                    <button style="background-color: mediumpurple; color: white;" @onclick="() => UpdateKitchenComment(order, commentInputValue)">Update Comment</button>
 
                     <!-- Update existing order lines' quantity -->
                     <div>
@@ -333,7 +358,7 @@
                                     var quantity = orderLineList
                                     .Where(ol => ol.ProductID == matchingProduct.ID && ol.OrderID == order.ID)
                                     .Sum(ol => ol.Quantity);
-                                    <br/>
+                                    <br />
                                     <p>
                                         @matchingProduct.Name, Quantity: @quantity
                                         <button style="background-color: darkolivegreen; color: white;" @onclick="() => IncreaseQuantity(matchingProduct.ID, order.ID)">+</button>
@@ -357,13 +382,14 @@
                     <label for="quantityInput">Quantity:</label>
                     <input type="number" id="quantityInput" @bind="selectedQuantity" style="width: 50px;" />
                     <button button style="background-color: mediumpurple; color: white;" @onclick="AddProductToOrder">Add Product to Order</button>
-                    <br/>
+                    <br />
+                    <button style="background-color: darkolivegreen; color: white; margin-top: 10px;" @onclick="@(async () => await AcceptOrder(order))">Accept Order</button>
                     <button style="background-color: darkred; color: white; margin-top: 10px;" @onclick="@(async () => await CancelOrder(order))">Cancel Order</button>
 
                 </div>
             </div>
         }
-        
+
     </div>
 
 
@@ -380,10 +406,9 @@
                     {
                         <p>
                             @orderLine.Product.Name, Quantity: @orderLine.Quantity
-                            <br />Price per product: @orderLine.Product.Price
+                            <br />Price per product: @orderLine.Product.Price 
                             <br>VAT @orderLine.Product.VAT%
-                            <br />Total VAT: @(Math.Round(orderLine.Product.Price * orderLine.Product.VAT / 100, 2)*orderLine.Quantity) SEK
-
+                            <br />Total VAT: @(Math.Round(orderLine.Product.Price * orderLine.Product.VAT / 100, 2) * orderLine.Quantity) SEK
                         </p>
                     }
                     <p>Total Amount: @order.SaleAmount SEK</p>
@@ -392,7 +417,7 @@
         }
     </div>
 
-    
+
 
     <script>
         function toggleAccordion(element) {
