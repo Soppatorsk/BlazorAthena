@@ -111,8 +111,7 @@ public class AccountController : ControllerBase
         // Iterate over each user.
         foreach (var user in users)
         {
-            // Get the role for the current user. Since each user can only have one role,
-            // we use the 'FirstOrDefault' method which will return the first role if the user has one,
+            // Get the role for the current user.
             // or 'null' if the user has no roles.
             var role = (await userManager.GetRolesAsync(user)).FirstOrDefault();
 
