@@ -17,10 +17,13 @@
     private int selectedOrderId { get; set; }
     private string commentInputValue = "";
 
+
+
     private async Task UpdateOrderComment(Order order, string comment)
     {
         try
         {
+
 
             var existingOrder = await httpClient.GetFromJsonAsync<Order>($"https://localhost:7088/api/Order/{order.ID}");
 

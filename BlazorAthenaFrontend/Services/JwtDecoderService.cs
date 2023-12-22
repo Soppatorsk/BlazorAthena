@@ -1,5 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
 using System.Security.Claims;
+
 
 namespace BlazorAthenaFrontend.Services
 {
@@ -17,5 +19,7 @@ namespace BlazorAthenaFrontend.Services
             // Create a new ClaimsPrincipal using the claims extracted from the JWT token
             return new ClaimsPrincipal(new ClaimsIdentity(jsonToken?.Claims));
         }
+
+
     }
 }

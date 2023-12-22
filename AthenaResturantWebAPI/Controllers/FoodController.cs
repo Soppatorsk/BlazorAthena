@@ -1,45 +1,47 @@
 ﻿using AthenaResturantWebAPI.Data.Context;
 using AthenaResturantWebAPI.Services;
 using BlazorAthena.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AthenaResturantWebAPI.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
+	
+	[ApiController]
+	[Route("api/[controller]")]
 
-    public class FoodController : Controller
-    {
-
-
-        private readonly AppDbContext _context;
-
-        public FoodController(AppDbContext context)
-        {
-            _context = context;
-        }
+	public class FoodController : Controller
+	{
 
 
-        [HttpGet(Name = "GetFoodList")]
-        public ActionResult<IEnumerable<Product>> Get()
-        {
+		private readonly AppDbContext _context;
 
-            var FoodList = _context.Foods
-                .Select(f => new Food { ID = f.ID, Lactose = f.Lactose, Nuts = f.Nuts })
-                .ToList();
-
+		public FoodController(AppDbContext context)
+		{
+			_context = context;
+		}
 
 
-            if (FoodList == null)
-            {
-                return NotFound(); // Or any other appropriate HTTP status code
-            }
+		[HttpGet(Name = "GetFoodList")]
+		public ActionResult<IEnumerable<Product>> Get()
+		{
 
-            return Ok(FoodList);
-        }
+			var FoodList = _context.Foods
+				.Select(f => new Food { ID = f.ID, Lactose = f.Lactose, Nuts = f.Nuts })
+				.ToList();
 
 
 
-    }
+			if (FoodList == null)
+			{
+				return NotFound(); // Or any other appropriate HTTP status code
+			}
+
+			return Ok(FoodList);
+		}
+
+
+
+	}
 }
