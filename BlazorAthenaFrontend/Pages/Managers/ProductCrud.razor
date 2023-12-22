@@ -1,0 +1,164 @@
+﻿@page "/ProductCrud"
+@inherits LayoutComponentBase
+@inject BlazorAthenaFrontend.Services.TokenService TokenService
+@inject System.Net.Http.HttpClient HttpClient
+@using System.Net.Http.Headers;
+@using BlazorAthenaFrontend.Models;
+@using System.IdentityModel.Tokens.Jwt;
+@using System.Collections.Generic;
+@using Newtonsoft.Json;
+@using System;
+
+<h3>Product List</h3>
+
+<button class="btn btn-primary" @onclick="LoadProducts">Load Products</button>
+
+@if (Products != null && Products.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>VAT</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in Products)
+            {
+                <tr>
+                    <td>@product.ID</td>
+                    <td>
+                        <input @bind="product.Name" />
+                    </td>
+                    <td>
+                        <input @bind="product.Description" />
+                    </td>
+                    <td>
+                        <input @bind="product.Price" />
+                    </td>
+                    <td>
+                        <input @bind="product.VAT" />
+                    </td>
+
+                    <td>
+                        <button class="btn btn-warning" @onclick="() => UpdateProduct(product)">Update</button>
+                        <button class="btn btn-danger" @onclick="() => DeleteProduct(product.ID)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No products available.</p>
+}
+
+@code {
+    [Parameter]
+    public List<Product> Products { get; set; }
+
+    // public class ProductUpdateDto
+    // {
+    //     public string Name { get; set; }
+    //     public string Description { get; set; }
+    //     public double Price { get; set; }
+    //     public double VAT { get; set; }
+    //     public string Image { get; set; } = "hej.png";
+    //     public int SubCategory { get; set; }
+    //     // Other properties as needed
+    // }
+
+
+
+    private async Task LoadProducts()
+    {
+        try
+        {
+            var jwtToken = TokenService.Token;
+
+            // Set the Authorization header with the JWT token
+            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+            // Make a GET request to the "GetAllProducts" endpoint
+            Products = await HttpClient.GetFromJsonAsync<List<Product>>("https://localhost:7088/api/Product");
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions (e.g., log or display an error message)
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    private async Task UpdateProduct(Product product)
+    {
+        try
+        {
+            // Fetch the existing Product to get its current state
+            var existingProduct = await HttpClient.GetFromJsonAsync<Product>($"https://localhost:7088/api/Product/{product.ID}");
+            if (existingProduct != null)
+            {
+                // Create a new DTO instance with updated properties
+                var productUpdateDto = new Product
+                    {
+                        Name = product.Name,
+                        Description = product.Description,
+                        Price = product.Price,
+                        VAT = product.VAT,
+                        Image = product.Image,
+                        SubCategoryId = product.SubCategoryId
+                        
+                        
+                    };
+
+                // Make a PUT request to the "UpdateProduct" endpoint
+                var response = await HttpClient.PutAsJsonAsync<Product>($"https://localhost:7088/api/Product/{product.ID}", productUpdateDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Product updated successfully!");
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to update product. Status code: {response.StatusCode}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Product with ID {product.ID} not found.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating product: {ex.Message}");
+        }
+    }
+
+
+    private async Task DeleteProduct(int productId)
+    {
+        try
+        {
+            // Make a DELETE request to the "DeleteProduct" endpoint
+            var response = await HttpClient.DeleteAsync($"https://localhost:7088/api/Product/{productId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Product deleted successfully, reload the products
+                await LoadProducts();
+            }
+            else
+            {
+                // Handle error, display a message, or log
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+}
