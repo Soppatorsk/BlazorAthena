@@ -21,14 +21,8 @@
         orderList = await httpClient.GetFromJsonAsync<List<Order>>("https://localhost:7088/api/Order");
     }
 }
-
-
-
-
-            <form asp-action="current-user1">
+            <form asp-action="current-user1"> 
             </form>
-
-
 @*             <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a asp-area="" asp-controller="AccountController" asp-action="current-user1">Dash Board</a></li>
@@ -45,7 +39,7 @@
         <br />
 
         @{
-            int drinksSubCategoryID = 3; //if this were to ever change in the db FIXA SEN!!!!!!!!!!!!
+            int drinksSubCategoryID = 3; //if this were to ever change in the db
         }
 
         @if (productList == null)
@@ -57,7 +51,7 @@
             <ul style="list-style: none;">
                 @foreach (var product in productList)
                 {
-                    if (product != null && product.DrinkID is null)
+                    if (product != null && product.DrinkID is null && product.MerchID == null)
                     {
                         <li style="margin-bottom: 0.8rem;">
                             <h4>@product.Name</h4>
