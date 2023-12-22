@@ -14,6 +14,7 @@
     private bool hasManagerRole;
     private bool hasEmployeeRole;
     private bool hasUserRole;
+    private bool hasAdminRole;
 
     protected override async Task OnInitializedAsync()
     {
@@ -41,6 +42,7 @@
             hasManagerRole = decoded.FindFirstValue("Role") == "Manager";
             hasEmployeeRole = decoded.FindFirstValue("Role") == "Employee";
             hasUserRole = decoded.FindFirstValue("Role") == "User";
+            hasAdminRole = decoded.FindFirstValue("Admin") == "Admin";
 
 
         }
@@ -86,7 +88,7 @@
             </NavLink>
         </div>
 
-        @if (hasManagerRole)
+        @if (hasManagerRole || hasAdminRole)
         {
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="users">
@@ -150,7 +152,7 @@
                 <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
             </NavLink>
         </div> *@
-        @if (hasManagerRole || hasEmployeeRole)
+        @if (hasManagerRole || hasEmployeeRole || hasAdminRole)
         {
             <div class="nav-item px-3">
             <NavLink class="nav-link" href="manageorders">
