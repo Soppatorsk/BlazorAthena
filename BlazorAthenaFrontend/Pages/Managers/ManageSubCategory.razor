@@ -1,6 +1,6 @@
 ﻿@page "/subs"
 @using BlazorAthenaFrontend.Data
-@inject SubCategoryService scs
+@inject SubCategoryRepository scs
 <PageTitle>sub test</PageTitle>
 
 
@@ -60,7 +60,7 @@ else
 
     public async void Submit()
     {
-        var subs = await scs.GetSubCategoryAsync();
+        var subs = await scs.GetSubCategoriesAsync();
         foreach(var sub in subs)
         {
             Console.WriteLine(sub.Name);
@@ -82,6 +82,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        subs = await scs.GetSubCategoryAsync();
+        subs = await scs.GetSubCategoriesAsync();
     }
 }
