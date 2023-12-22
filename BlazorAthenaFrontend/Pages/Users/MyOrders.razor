@@ -1,0 +1,409 @@
+﻿@using BlazorAthenaFrontend.Models
+@inject HttpClient httpClient
+@using System.Security.Claims
+@using BlazorAthenaFrontend.Services;
+@inject BlazorAthenaFrontend.Services.TokenService TokenService
+@inject BlazorAthenaFrontend.Services.JwtDecoderService JwtDecoderService
+@inject NavigationManager NavigationManager
+
+@page "/MyOrders"
+@code {
+    private List<Order> usersOrderList;
+    private List<Product> productList;
+    private List<OrderLine> orderLineList;
+    private List<Order> pendingOrders;
+    private int selectedProductId { get; set; }
+    private int selectedQuantity { get; set; }
+    private int selectedOrderId { get; set; }
+    private string commentInputValue = "";
+
+    private async Task UpdateOrderComment(Order order, string comment)
+    {
+        try
+        {
+
+            var existingOrder = await httpClient.GetFromJsonAsync<Order>($"https://localhost:7088/api/Order/{order.ID}");
+
+            if (order != null)
+            {
+                order.Comment = comment;
+                var response = await httpClient.PutAsJsonAsync($"https://localhost:7088/api/Order/{order.ID}", order);
+            }
+            else
+            {
+                Console.WriteLine($"Failed to add order line. Status code:");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding order line: {ex.Message}");
+        }
+    }
+
+
+    private void AddProductToOrder()
+    {
+        // Check if a product is selected
+
+        if (selectedOrderId != 0 && selectedProductId != 0 && selectedQuantity > 0)
+        {
+            // Find the selected order
+            var selectedOrder = pendingOrders.FirstOrDefault(o => o.ID == selectedOrderId);
+
+            if (selectedOrder != null)
+            {
+                // Get the selected product
+                var selectedProduct = productList.FirstOrDefault(p => p.ID == selectedProductId);
+
+                // Create a new OrderLine
+                var newOrderLine = new OrderLine
+                    {
+                        ProductID = selectedProduct.ID,
+                        Quantity = selectedQuantity,
+                        OrderID = selectedOrder.ID
+                        // You may need to set other properties of the OrderLine
+                    };
+
+                // Add the new OrderLine to the selected order
+                selectedOrder.OrderLines.Add(newOrderLine);
+
+                // Optionally, clear the selection after adding the product
+                selectedProductId = 0;
+                selectedQuantity = 0;
+
+                //AddNewOrderLine(newOrderLine);
+                SendOrderLine(newOrderLine);
+
+            }
+        }
+    }
+
+    private async Task AddNewOrderLine(OrderLine orderLine)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync($"https://localhost:7088/api/OrderLine/AddOrderLine", orderLine);
+
+
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Order line added successfully!");
+            }
+            else
+            {
+                Console.WriteLine($"Failed to add order line. Status code: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding order line: {ex.Message}");
+        }
+    } //funkar EJ
+
+    private async Task SendOrderLine(OrderLine orderLine)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("https://localhost:7088/api/OrderLine", orderLine);
+
+            // Check if the request was successful
+            if (!response.IsSuccessStatusCode)
+            {
+                // Handle the case where the request was not successful
+                Console.WriteLine($"Error placing order line. Status code: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions that might occur during the HTTP request
+            Console.WriteLine($"Error placing order line: {ex.Message}");
+        }
+    }
+
+    private async Task UpdateOrderLineQuantity(OrderLine orderLineToUpdate)
+    {
+
+        try
+        {
+            // Fetch the existing order line to get its current state
+            var existingOrderLine = await httpClient.GetFromJsonAsync<OrderLine>($"https://localhost:7088/api/OrderLine/{orderLineToUpdate.ID}");
+
+            if (existingOrderLine != null)
+            {
+                // Update only the Quantity property
+                existingOrderLine.Quantity = orderLineToUpdate.Quantity;
+
+                // Send the updated order line back to the server
+                var response = await httpClient.PutAsJsonAsync($"https://localhost:7088/api/OrderLine/{orderLineToUpdate.ID}", existingOrderLine);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Order line quantity updated successfully!");
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to update order line quantity. Status code: {response.StatusCode}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Order line with ID {orderLineToUpdate.ID} not found.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating order line quantity: {ex.Message}");
+        }
+    }
+
+    private async Task IncreaseQuantity(int productId, int orderId)
+    {
+        // Find the order line to update
+        var orderLineToUpdate = orderLineList.FirstOrDefault(ol => ol.ProductID == productId && ol.OrderID == orderId);
+
+        // Check if the order line is found
+        if (orderLineToUpdate != null)
+        {
+            // Increase the quantity
+            orderLineToUpdate.Quantity++;
+
+            // Update the order line quantity
+            await UpdateOrderLineQuantity(orderLineToUpdate);
+        }
+    }
+
+    private async Task DecreseQuantity(int productId, int orderId)
+    {
+        // Find the order line to update
+        var orderLineToUpdate = orderLineList.FirstOrDefault(ol => ol.ProductID == productId && ol.OrderID == orderId);
+
+        // Check if the order line is found
+        if (orderLineToUpdate != null)
+        {
+            // Increase the quantity
+            orderLineToUpdate.Quantity--;
+            if (orderLineToUpdate.Quantity <= 0)
+            {
+                orderLineToUpdate.Quantity = 0;
+            }
+
+            // Update the order line quantity
+            await UpdateOrderLineQuantity(orderLineToUpdate);
+        }
+    }
+
+    private async Task CancelOrder(Order order)
+    {
+
+        try
+        {
+            var existingOrder = await httpClient.GetFromJsonAsync<Order>($"https://localhost:7088/api/Order/{order.ID}");
+
+            if (existingOrder != null)
+            {
+
+            var response = await httpClient.DeleteAsync($"https://localhost:7088/api/Order/{order.ID}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                    
+                Console.WriteLine("Order canceled successfully!");
+                    NavigationManager.NavigateTo("/MyOrders");
+            }
+            else
+            {
+                Console.WriteLine($"Failed to cancel order. Status code: {response.StatusCode}");
+            }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error canceling order: {ex.Message}");
+        }
+        Console.WriteLine("Order canceled!");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var jwtToken = TokenService.Token;
+        var currentUser = CurrentUserService.GetCurrentUserFromToken(jwtToken);
+
+        var orderList = await httpClient.GetFromJsonAsync<List<Order>>("https://localhost:7088/api/Order");
+        productList = await httpClient.GetFromJsonAsync<List<Product>>("https://localhost:7088/api/Product");
+        orderLineList = await httpClient.GetFromJsonAsync<List<OrderLine>>("https://localhost:7088/api/OrderLine");
+
+        usersOrderList = orderList
+            .Where(order => order.UserID == currentUser && order.Accepted == true)
+            .ToList();
+
+        // Fetch OrderLines and associated Products for each order
+        foreach (var order in usersOrderList)
+        {
+            order.OrderLines = orderLineList
+                .Where(orderLine => orderLine.OrderID == order.ID)
+                .ToList();
+
+            // Fetch Product details for each OrderLine
+            foreach (var orderLine in order.OrderLines)
+            {
+                orderLine.Product = productList
+                    .FirstOrDefault(product => product.ID == orderLine.ProductID);
+            }
+
+        }
+
+        // Fetch pending orders
+        pendingOrders = orderList
+            .Where(order => order.UserID == currentUser && order.Accepted == false)
+            .ToList();
+    }
+}
+
+@if (usersOrderList != null)
+{
+    <!-- Accordion for Accepted Orders -->
+    <style>
+        .accordion {
+            display: flex;
+            flex-direction: column;
+            width: 50rem;
+            max-width: 100%;
+        }
+
+        .accordion-item {
+            border: 1px solid purple;
+            margin-bottom: 5px;
+        }
+
+        .accordion-header2{
+            padding: 10px;
+            background-color: #FFFF8F;
+            cursor: pointer;
+        }
+
+        .accordion-header {
+            padding: 10px;
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 10px;
+        }
+    </style>
+
+    <!-- Accordion for Pending Orders -->
+    <div class="accordion">
+        @foreach (var order in pendingOrders)
+        {
+            selectedOrderId = order.ID;
+            <div class="accordion-item">
+                <div class="accordion-header2" onclick="toggleAccordion(this)">
+                    Pending Order nr#: @order.ID Date: @order.TimeStamp.ToString("yyyy-MM-dd HH:mm:ss")
+                </div>
+                <div class="accordion-content">
+                    <p>Comment: @order.Comment</p>
+                    <label for="commentInput">Update Comment:</label>
+                    <input type="text" id="commentInput" @bind="commentInputValue" />
+
+                    <button style="background-color: mediumpurple; color: white;" @onclick="() => UpdateOrderComment(order, commentInputValue)">Update Comment</button>
+
+                    <!-- Update existing order lines' quantity -->
+                    <div>
+                        @{
+                            var uniqueProducts = new List<int>();
+                        }
+
+                        @foreach (var ol in orderLineList.Where(ol => ol.OrderID == order.ID))
+                        {
+                            var currentOL = ol.ID;
+
+                            // Check if the product has already been displayed
+                            if (!uniqueProducts.Contains(ol.ProductID))
+                            {
+                                uniqueProducts.Add(ol.ProductID);
+
+                                // Filter the productList based on the current order line's ProductID
+                                var matchingProduct = productList.FirstOrDefault(p => p.ID == ol.ProductID);
+
+                                if (matchingProduct != null)
+                                {
+                                    // Calculate the quantity for current product
+                                    var quantity = orderLineList
+                                    .Where(ol => ol.ProductID == matchingProduct.ID && ol.OrderID == order.ID)
+                                    .Sum(ol => ol.Quantity);
+                                    <br/>
+                                    <p>
+                                        @matchingProduct.Name, Quantity: @quantity
+                                        <button style="background-color: darkolivegreen; color: white;" @onclick="() => IncreaseQuantity(matchingProduct.ID, order.ID)">+</button>
+                                        <button style="background-color: darkred; color: white;" @onclick="() => DecreseQuantity(matchingProduct.ID, order.ID)">-</button>
+                                    </p>
+
+                                }
+                            }
+                        }
+                    </div>
+                    <!-- Adding new order lines (ie new products) to order -->
+                    <label for="productDropdown">Select additional product:</label>
+                    <select id="productDropdown" @bind="selectedProductId">
+                        <br />
+                        <option value="">-- Select Product --</option>
+                        @foreach (var product in productList)
+                        {
+                            <option value="@product.ID">@product.Name</option>
+                        }
+                    </select>
+                    <label for="quantityInput">Quantity:</label>
+                    <input type="number" id="quantityInput" @bind="selectedQuantity" style="width: 50px;" />
+                    <button button style="background-color: mediumpurple; color: white;" @onclick="AddProductToOrder">Add Product to Order</button>
+                    <br/>
+                    <button style="background-color: darkred; color: white; margin-top: 10px;" @onclick="@(async () => await CancelOrder(order))">Cancel Order</button>
+
+                </div>
+            </div>
+        }
+        
+    </div>
+
+
+
+    <div class="accordion">
+        @foreach (var order in usersOrderList)
+        {
+            <div class="accordion-item">
+                <div class="accordion-header" onclick="toggleAccordion(this)">
+                    Receipt nr#: @order.ID Date: @order.TimeStamp.ToString("yyyy-MM-dd HH:mm:ss")
+                </div>
+                <div class="accordion-content">
+                    @foreach (var orderLine in order.OrderLines)
+                    {
+                        <p>
+                            @orderLine.Product.Name, Quantity: @orderLine.Quantity
+                            <br />Price per product: @orderLine.Product.Price
+                            <br>VAT @orderLine.Product.VAT%
+                        </p>
+                    }
+                    <p>Total Amount: @order.SaleAmount SEK</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    
+
+    <script>
+        function toggleAccordion(element) {
+            var content = element.nextElementSibling;
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
+            }
+        }
+    </script>
+}
+else
+{
+    <p>Loading...</p>
+}

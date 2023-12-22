@@ -1,0 +1,57 @@
+﻿@using BlazorAthenaFrontend.Services;
+@using BlazorAthenaFrontend.Data.Identity;
+@page "/users"
+@inject HttpClient httpClient
+@inject UserService UserService
+@inject NavigationManager NavigationManager
+
+<h3>User List</h3>
+
+@code {
+    private List<ApplicationUser> users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await httpClient.GetFromJsonAsync<List<ApplicationUser>>("https://localhost:7088/fetchusers");
+        //users = await UserService.FetchUsersAsync();
+    }
+
+    void NavigateToEditPage(string userId)
+    {
+        NavigationManager.NavigateTo($"/edituser/{userId}");
+    }
+}
+
+@if (users == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>UserName</th>
+                <th>Actions</th>
+                <!-- Add other properties as needed -->
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.Email</td>
+                    <td>@user.UserName</td>
+                    <td>
+                        <button @onclick="() => NavigateToEditPage(user.Id)">Edit</button>
+                    </td>
+                    <!-- Add other properties as needed -->
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+

@@ -1,0 +1,136 @@
+﻿@using BlazorAthenaFrontend.Models
+@inject HttpClient httpClient
+@using System.Security.Claims
+
+
+@page "/foodmenu"
+@code {
+    private List<Product> productList;
+    private List<Food> foodList;
+    private List<Drink> drinkList;
+    private List<Order> orderList;
+    private string jwtToken;
+    private ClaimsPrincipal claimsPrincipal;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        productList = await httpClient.GetFromJsonAsync<List<Product>>("https://localhost:7088/api/Product");
+        foodList = await httpClient.GetFromJsonAsync<List<Food>>("https://localhost:7088/api/Food");
+        drinkList = await httpClient.GetFromJsonAsync<List<Drink>>("https://localhost:7088/api/Drink");
+        orderList = await httpClient.GetFromJsonAsync<List<Order>>("https://localhost:7088/api/Order");
+    }
+}
+
+
+
+
+            <form asp-action="current-user1">
+            </form>
+
+
+            <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-area="" asp-controller="AccountController" asp-action="current-user1">Dash Board</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Home</li>
+    </ol>
+</nav>
+<h1 class="display-4">Admin Panel Page</h1
+
+
+<div style="display: flex; justify-content: space-between;">
+    
+    <div style="width: 45%; text-align: center; margin: 1rem;">
+		<h2>À la carte</h2>
+        <br />
+
+        @{
+            int drinksSubCategoryID = 3; //if this were to ever change in the db FIXA SEN!!!!!!!!!!!!
+        }
+
+        @if (productList == null)
+        {
+            <p>Loading...</p>
+        }
+        else
+        {
+            <ul style="list-style: none;">
+                @foreach (var product in productList)
+                {
+                    if (product != null && product.DrinkID is null)
+                    {
+                        <li style="margin-bottom: 0.8rem;">
+                            <h4>@product.Name</h4>
+                            <i>@product.Description</i>
+                            <br />
+                            <strong>Price:</strong> @product.Price SEK
+                            <br/>
+                            
+                            
+                            @foreach (var food in foodList) //check if current product/food has allergi info
+                            {
+                                @if (food.ID == product.FoodID )
+                                {
+                                    
+                                    if (food != null)
+                                    {
+                                        
+                                        if (food.Lactose)
+                                        {
+                                            <div style="font-size: small;">
+                                                <em>Allergy information:</em>
+                                                <br/>
+                                                <span>Contains lactose</span>
+                                            </div>
+                                        }
+                                        if (food.Nuts)
+                                        {
+                                            <div style="font-size: small;">
+                                                <em>Allergy information:</em>
+                                                <span>Contains nuts</span>
+                                            </div>
+                                        }
+                                    }
+                                   
+                                }                                
+                            }
+                            <hr style="height: 0.2rem; background-color: purple; opacity: 1; width: 3rem; margin: 0.5rem auto;" />
+                            <br />
+                        </li>
+                    }
+                }
+            </ul>
+        }
+    </div>
+
+    <div style="width: 45%; text-align: center; margin: 1rem;">
+        <h2>Drinks</h2>
+        <br />
+        @if (productList != null)
+        {
+            <ul style="list-style: none;">
+                @foreach (var product in productList)
+                {
+                    if (product != null && product.DrinkID != null)
+                    {
+                        <li style="margin-bottom: 0.8rem;">
+                            <h4>@product.Name</h4>
+                            @foreach (var drink in drinkList.Where(d => product.DrinkID == d.ID && d.AlcoholPercentage > 0))
+                            {
+                                
+                                <div style="font-size: small;">
+									<span>@drink.AlcoholPercentage %</span>
+                                    <br />
+                                </div>
+                                break; // Exit the loop once a drink with AlcoholPercentage > 0 is found
+                            }
+                            <strong>Price:</strong> @product.Price SEK
+                            <hr style="height: 0.2rem; background-color: purple; opacity: 1; width: 3rem; margin: 0.5rem auto;" />
+                            <br />
+                        </li>
+                    }
+                }
+            </ul>
+        }
+    </div>
+</div>

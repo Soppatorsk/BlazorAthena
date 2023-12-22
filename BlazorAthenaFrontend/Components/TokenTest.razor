@@ -1,0 +1,22 @@
+﻿@page "/token-test"
+@using BlazorAthenaFrontend.Services
+@inject AuthenticationService AuthenticationService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+@code {
+    private string username;
+    private string password;
+
+    private async Task HandleLogin()
+    {
+        // Call the login service to get the token
+        var tokenModel = await AuthenticationService.LoginAsync(username, password);
+
+        // Store the token securely (e.g., in session storage)
+        await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "authToken", tokenModel.Token);
+
+        // Redirect to another page or perform other actions
+        NavigationManager.NavigateTo("/dashboard");
+    }
+}

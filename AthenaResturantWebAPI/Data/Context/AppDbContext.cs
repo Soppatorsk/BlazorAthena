@@ -1,9 +1,12 @@
-﻿using BlazorAthena.Models;
+﻿using AthenaResturantWebAPI.Data.AppUser;
+using AthenaResturantWebAPI.Models;
+using BlazorAthena.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace AthenaResturantWebAPI.Data.Context
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -14,6 +17,35 @@ namespace AthenaResturantWebAPI.Data.Context
         public DbSet<OrderLine> OrderLines { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<SubCategory> SubCategories { get; set; }
+        public DbSet<Merch> Merch { get; set; }
+
+
+        //protected override void OnModelCreating(ModelBuilder modelBuilder)
+        //{
+        //    base.OnModelCreating(modelBuilder);
+
+        //    // relationship Order and OrderLine
+        //    modelBuilder.Entity<BlazorAthena.Models.Order>()
+        //        .HasMany(o => o.OrderLines)
+        //        .WithOne(ol => ol.Order)
+        //        .HasForeignKey(ol => ol.OrderID);
+        //}
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+
+            modelBuilder.Entity<Order>()
+                .Property(o => o.SaleAmount)
+                .HasColumnType("decimal(18, 2)"); 
+
+            modelBuilder.Entity<Product>()
+                .Property(p => p.Price)
+                .HasColumnType("decimal(18, 2)"); 
+        }
+
+
     }
 
 

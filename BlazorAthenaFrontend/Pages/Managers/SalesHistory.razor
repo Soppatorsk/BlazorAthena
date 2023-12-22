@@ -1,0 +1,72 @@
+﻿@page "/SalesHistory"
+@inject BlazorAthenaFrontend.Services.JwtDecoderService JwtDecoderService
+@using System.Security.Claims
+@inject BlazorAthenaFrontend.Services.TokenService TokenService
+@inject System.Net.Http.HttpClient httpClient
+@using BlazorAthenaFrontend.Services
+@using BlazorAthenaFrontend.Models
+@inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
+
+
+<!-- Loading state -->
+@if (salesHistory == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <ul>
+        <!-- Display sales history -->
+        @foreach (var sale in salesHistory)
+        {
+            <li>@sale.Id - @sale.SaleAmount</li>
+        }
+    </ul>
+}
+
+@code {
+    private List<SalesData> salesHistory;
+
+    // Inject the HttpClient service
+    [Inject]
+    private HttpClient HttpClient { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+
+            // Retrieve the JWT token from the TokenService
+            var jwtToken = TokenService.Token;
+
+            // Decode the JWT token to extract user information
+            var currentUser = JwtDecoderService.DecodeToken(jwtToken);
+
+            // Check if the user is authenticated
+            if (!string.IsNullOrEmpty(jwtToken) && currentUser != null)
+            {
+                // Logic to handle the authenticated user
+
+                // Call the API endpoint to get sales history
+                salesHistory = await HttpClient.GetFromJsonAsync<List<SalesData>>("https://localhost:7088/api/sales/history?timeFrame=week");
+            }
+            else
+            {
+                // Handle the case where the user is not authenticated
+                // Redirect to the home page if currentUser is empty
+                if (currentUser == null)
+                {
+                    NavigationManager.NavigateTo("/Home");
+                }
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            // Handle the error, log it, or display a user-friendly message
+            Console.WriteLine($"API request failed: {ex.Message}");
+        }
+
+        base.OnInitialized();
+    }
+}

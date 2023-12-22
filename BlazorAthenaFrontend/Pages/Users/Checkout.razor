@@ -1,0 +1,383 @@
+﻿@page "/checkout"
+@using BlazorAthenaFrontend.Services
+@using BlazorAthenaFrontend.Models
+@inject BlazorAthenaFrontend.Services.CartService CartService
+@inject BlazorAthenaFrontend.Services.TokenService TokenService
+@inject BlazorAthenaFrontend.Services.JwtDecoderService JwtDecoderService
+@using System.Security.Claims
+@inject System.Net.Http.HttpClient httpClient
+
+
+<h3>Checkout</h3>
+<h3>You have @CartService.SelectedProducts.Count item(s) in your cart:</h3>
+
+@foreach (var productGroup in CartService.SelectedProducts.GroupBy(p => p.Name))
+{
+    int amountOfItems = 0;
+
+    @foreach (var product in productGroup)
+    {
+        amountOfItems++;
+    }
+
+    <div>
+        <div>
+            @productGroup.First().Name á @productGroup.First().Price SEK
+        </div>
+        <div>
+            Amount: @amountOfItems
+        </div>
+        <div>
+            Total Price: @productGroup.Sum(p => p.Price) SEK
+        </div>
+        <button style="background-color: darkolivegreen; color: white;" @onclick="() => AddProduct(productGroup.First(), amountOfItems)">+</button>
+        <button style="background-color: darkred; color: white;" @onclick="() => RemoveProduct(productGroup.First())">-</button>
+    </div>
+
+    <hr />
+}
+
+@code {
+    double totalAmount = 0;
+    bool orderPlaced = false;
+    bool clickedAlterOrder = false;
+    DateTime timeStamp;
+    string currentUser;
+    string userInputSummary = string.Empty;
+    int addedOrderId = -1; //will catch the ID of newly added order
+    private string jwtToken;
+    private ClaimsPrincipal claimsPrincipal;
+
+
+    private void CalculateTotalAmount()
+    {
+        totalAmount = CartService.SelectedProducts.Sum(p => p.Price);
+    }
+
+    private void AddProduct(Product product, int quantity) //When user clicks additional item from ones already chosen ie +
+    {
+        CartService.SelectedProducts.Add(product);
+        CalculateTotalAmount();
+    }
+
+
+    private void RemoveProduct(Product product) // same as above, but removes ie -
+    {
+        CartService.SelectedProducts.Remove(product);
+        CalculateTotalAmount();
+    }
+
+    protected override void OnInitialized()
+    {
+        CalculateTotalAmount();
+        base.OnInitialized();
+        jwtToken = TokenService.Token;
+        currentUser = CurrentUserService.GetCurrentUserFromToken(jwtToken);
+    }
+
+    private async Task PlaceOrder()
+    {
+        orderPlaced = true;
+        timeStamp = DateTime.Now;
+
+        var order = new
+        {
+            UserId = currentUser,
+            SaleAmount = totalAmount,
+            Comment = userInputSummary,
+            Accepted = false,
+            OrderLines = CartService.OrderLines.Select(ol => new
+            {
+                ProductId = ol.ProductID,
+                Quantity = ol.Quantity
+            }).ToList()
+        };
+
+        try
+        {
+            // Send the main order
+            await SendOrder("https://localhost:7088/api/Order", order);
+
+            //totalAmount = CartService.ClearCart();
+
+            CartService.AddOrderLine(addedOrderId, CartService.SelectedProducts);
+            // Send the (grouped) order lines
+            foreach (var orderLine in CartService.OrderLines)
+            {
+                await SendOrderLine("https://localhost:7088/api/OrderLine", orderLine);
+            }
+
+            // Clear the cart after placing the order
+            CartService.ClearCart();
+
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error placing order: {ex.Message}");
+            Console.WriteLine($"Error placing order: {ex.Message}");
+        }
+    }
+
+
+    private async Task SendOrder(string endpoint, object order)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync(endpoint, order);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var addedOrder = await response.Content.ReadFromJsonAsync<Order>();
+
+                // Gets the added order's ID
+                addedOrderId = addedOrder?.ID ?? -1; //-1 for fails
+            }
+            else
+            {
+                Console.WriteLine($"Error placing order. Status code: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions that might occur during the HTTP request
+            Console.WriteLine($"Error placing order: {ex.Message}");
+        }
+    }
+
+    private async Task SendOrderLine(string endpoint, OrderLine orderLine)
+    {
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync(endpoint, orderLine);
+
+            // Check if the request was successful
+            if (!response.IsSuccessStatusCode)
+            {
+                // Handle the case where the request was not successful
+                Console.WriteLine($"Error placing order line. Status code: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions that might occur during the HTTP request
+            Console.WriteLine($"Error placing order line: {ex.Message}");
+        }
+    }
+
+    private async Task AlterOrder()
+
+    {
+        var productList = await httpClient.GetFromJsonAsync<List<Product>>("https://localhost:7088/api/Product");
+
+        var orderLines = await httpClient.GetFromJsonAsync<List<OrderLine>>("https://localhost:7088/api/OrderLine");
+
+        var orderList = await httpClient.GetFromJsonAsync<List<Order>>("https://localhost:7088/api/Order");
+
+        // Filter orders based  the current user and status accepted 
+        var currentOrders = orderList
+            .Where(o => o.UserID == currentUser && o.Accepted == false)
+            .ToList();
+
+        // Iterate through each current order
+        foreach (var order in currentOrders) //FEL HÄR, DEN UPPDATERAR INTE MED NYTT??
+        {
+            var orderLinesForOrder = orderLines
+                .Where(orderLine => orderLine.OrderID == order.ID)
+                .ToList();
+
+            foreach (var ol in orderLinesForOrder)
+            {
+                ol.Product = productList
+                    .FirstOrDefault(product => product.ID == ol.ProductID);
+
+                // Add the product to SelectedProducts for the specified quantity
+                for (int i = 0; i < ol.Quantity; i++)
+                {
+                    CartService.SelectedProducts.Add(ol.Product);
+                }
+            }
+        }
+        var groupedProducts = CartService.SelectedProducts
+        .GroupBy(product => product.ID)
+        .Select(group => new
+        {
+            ProductId = group.Key,
+            Quantity = group.Count()
+        })
+        .ToList();
+        clickedAlterOrder = true; 
+    }
+
+    @code {
+
+        private async Task UpdateCurrentOrder()
+        {
+            if (addedOrderId != -1)
+            {
+                // Group selected products by type and sum quantities
+                var groupedProducts = CartService.SelectedProducts
+                    .GroupBy(product => product.ID)
+                    .Select(group => new
+                    {
+                        ProductId = group.Key,
+                        Quantity = group.Count()
+                    })
+                    .ToList();
+
+
+                var orderToUpdate = new
+                {
+                    ID = addedOrderId,
+                    UserId = currentUser,
+                    SaleAmount = totalAmount,
+                    Comment = userInputSummary,
+                    Accepted = false,
+                    //OrderLines = new List<object>()  // Create a list to hold individual order lines, doesn't really work?
+                };
+
+                // Create order line for each group
+                // foreach (var groupedProduct in groupedProducts)
+                // {
+                //     var orderLine = new
+                //     {
+                //         ProductID = groupedProduct.ProductId,
+                //         Quantity = groupedProduct.Quantity
+                //     };
+                //     orderToUpdate.OrderLines.Add(orderLine);
+                // }
+
+                DeleteOldOrderLines(addedOrderId);
+
+                List<OrderLine> OrderLines = new List<OrderLine>();
+
+                foreach (var groupedProduct in groupedProducts)
+                {
+                    var orderLine = new OrderLine
+                    {
+                        ProductID = groupedProduct.ProductId,
+                        Quantity = groupedProduct.Quantity
+                    };
+                    OrderLines.Add(orderLine);
+                }
+
+                AddNewOrderLines(addedOrderId, OrderLines);
+
+                try
+                {
+                    var updateEndpoint = $"https://localhost:7088/api/Order/{addedOrderId}";
+                    var response = await httpClient.PutAsJsonAsync(updateEndpoint, orderToUpdate);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine("Order updated successfully!");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Error updating order. Status code: {response.StatusCode}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error updating order: {ex.Message}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("No order to update. Please place an order first.");
+            }
+        }
+
+        private async Task DeleteOldOrderLines(int addedOrderId)
+        {
+            try
+            {
+                // Delete order lines associated with the order
+                var deleteOrderLinesEndpoint = $"https://localhost:7088/api/OrderLine/DeleteByOrder/{addedOrderId}";
+                var deleteOrderLinesResponse = await httpClient.DeleteAsync(deleteOrderLinesEndpoint);
+
+                if (deleteOrderLinesResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Order lines deleted successfully!");
+
+                    // // Now, delete the order
+                    // var deleteOrderEndpoint = $"https://localhost:7088/api/Order/{addedOrderId}";
+                    // var deleteOrderResponse = await httpClient.DeleteAsync(deleteOrderEndpoint);
+
+                    // if (deleteOrderResponse.IsSuccessStatusCode)
+                    // {
+                    //     Console.WriteLine("Order deleted successfully!");
+
+                    //     //CartService.ClearCart();
+                    // }
+                    // else
+                    // {
+                    //     Console.WriteLine($"Error deleting order. Status code: {deleteOrderResponse.StatusCode}");
+                    // }
+                }
+                else
+                {
+                    Console.WriteLine($"Error deleting order lines. Status code: {deleteOrderLinesResponse.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting order: {ex.Message}");
+            }
+
+
+
+        }
+
+        private async Task AddNewOrderLines(int addedOrderId, List<OrderLine> OrderLines)
+        {
+           
+            CartService.AddOrderLine(addedOrderId, CartService.SelectedProducts);
+            // Send the (grouped) order lines
+            foreach (var orderLine in CartService.OrderLines)
+            {
+                await SendOrderLine("https://localhost:7088/api/OrderLine", orderLine);
+            }
+        }
+
+        }
+
+
+    }
+
+
+
+
+<h3>Total amount: @totalAmount SEK</h3>
+
+<p>Add comment to the kitchen (optional)</p>
+<textarea id="userInputSummary" rows="4" cols="50" style="resize: none;" @bind="userInputSummary"></textarea>
+<br />
+@if (orderPlaced)
+{
+    <i style="color: red">Waiting for approval. Order can still be altered under "My orders".</i>
+    <br />
+    <i>You placed your order at @timeStamp</i>
+
+   @*  <button style="background-color: blue; color: white;"
+    @onclick="AlterOrder">
+        Alter order
+    </button>
+    @if (clickedAlterOrder)
+    {
+        //om man har klickat på AlterOrder, så ska det uppdatera existerande order, ej skapa ny
+        <button style="background-color: darkseagreen; color: white;"
+        @onclick="UpdateCurrentOrder">
+            Send updates
+        </button>
+         *@
+
+    }
+
+
+<br />
+
+<button style="background-color: purple; color: white;"
+@onclick="PlaceOrder">
+    Place order
+</button>

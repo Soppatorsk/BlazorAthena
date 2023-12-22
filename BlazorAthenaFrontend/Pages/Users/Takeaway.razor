@@ -1,0 +1,56 @@
+﻿@page "/takeaway"
+@inject BlazorAthenaFrontend.Services.CartService CartService
+@inject System.Net.Http.HttpClient httpClient
+@using BlazorAthenaFrontend.Models;
+
+<h3>ProductList</h3>
+
+@code {
+    private List<BlazorAthenaFrontend.Models.Product> productList;
+    private List<Product> savedProducts = new List<Product>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        productList = await httpClient.GetFromJsonAsync<List<BlazorAthenaFrontend.Models.Product>>("https://localhost:7088/api/Product");
+   
+        savedProducts.AddRange(productList.Select(p => new Product
+            {
+                ID = p.ID,
+                Name = p.Name,
+                Description = p.Description,
+                Price = p.Price
+                // Add other properties as needed
+            }));
+
+    }
+
+    private async Task Purchase(Product chosenProduct)
+    {
+        Console.WriteLine("Purchase clicked");
+        await CartService.AddProductToCartAsync(chosenProduct);
+
+        //CartService.SelectedProducts.Add(chosenProduct); will add duplicate -_-
+
+    }
+
+}
+
+
+@if (productList == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    @foreach (var product in savedProducts)
+    {
+        <div class="card w-25">
+            <div class="card-body">
+                <h5 class="card-title">@product?.Name</h5>
+                <p class="card-text">@product?.Description</p>
+                <blockquote class="card-text">$@(product?.Price ?? 0)</blockquote>
+                <button style="background-color: purple; color: white;" type="button" @onclick="() => Purchase(product)">Order</button>
+            </div>
+        </div>
+    }
+}
