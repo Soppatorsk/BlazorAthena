@@ -20,7 +20,8 @@
             ID = p.ID,
             Name = p.Name,
             Description = p.Description,
-            Price = p.Price
+            Price = p.Price,
+            Image = p.Image
             // Add other properties as needed
         }));
 
@@ -47,6 +48,14 @@ else
     @foreach (var product in savedProducts)
     {
         <div class="card w-25">
+            @{
+                var imageUrl = $"https://localhost:7088/img/{product.Image}";
+                Console.WriteLine($"Image URL: {imageUrl}");
+            }
+            @if (!string.IsNullOrEmpty(product.Image))
+            {
+                <img src="@imageUrl" class="card-img-top" alt="Product Image">
+            }
             <div class="card-body">
                 <h5 class="card-title">@product?.Name</h5>
                 <p class="card-text">@product?.Description</p>

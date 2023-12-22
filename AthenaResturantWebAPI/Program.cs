@@ -137,7 +137,7 @@ namespace AthenaResturantWebAPI
 
             // CORS middleware
             app.UseCors();
-
+            app.UseStaticFiles();
             app.UseAuthentication(); 
             app.UseAuthorization();
 

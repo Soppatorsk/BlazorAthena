@@ -25,4 +25,20 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="wwwroot\Img\Blended-fruit-smoothies.jpg" />
+    <None Include="wwwroot\Img\Brownie.jpg" />
+    <None Include="wwwroot\Img\CheeseCake.jpg" />
+    <None Include="wwwroot\Img\Classic_Burger.jpg" />
+    <None Include="wwwroot\Img\Fudge_Sunday.jpg" />
+    <None Include="wwwroot\Img\grilled_chicken_sandwich.jpg" />
+    <None Include="wwwroot\Img\grilled_Salmon.jpg" />
+    <None Include="wwwroot\Img\iced_tea.jpg" />
+    <None Include="wwwroot\Img\shirt.jpg" />
+    <None Include="wwwroot\Img\shirtRed.jpg" />
+    <None Include="wwwroot\Img\soda.png" />
+    <None Include="wwwroot\Img\Tiramisu.jpg" />
+    <None Include="wwwroot\Img\Vegetable-Pizza.jpg" />
+  </ItemGroup>
+
 </Project>
