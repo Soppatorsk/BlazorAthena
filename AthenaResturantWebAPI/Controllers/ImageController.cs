@@ -9,7 +9,8 @@ namespace AthenaResturantWebAPI.Controllers
     [ApiController]
     public class ImageController : ControllerBase
     {
-        string imageFolder = "wwwroot";
+
+        string imageFolder = "wwwroot/Img";
 
         // GET: api/<ImagesController>
         [HttpGet]
