@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using AthenaResturantWebAPI.Models;
 
 namespace BlazorAthenaFrontend.Models
 {
@@ -30,6 +31,10 @@ namespace BlazorAthenaFrontend.Models
 
         public Food? Food { get; set; }
 
+        [ForeignKey("Merch")]
+        public int? MerchID { get; set; }
+
+        public Merch? Merch { get; set; }
         public bool Available { get; set; } = true;
 
         [ForeignKey("SubCategory")]

@@ -13,14 +13,16 @@
     {
         productList = await httpClient.GetFromJsonAsync<List<BlazorAthenaFrontend.Models.Product>>("https://localhost:7088/api/Product");
    
-        savedProducts.AddRange(productList.Select(p => new Product
-            {
-                ID = p.ID,
-                Name = p.Name,
-                Description = p.Description,
-                Price = p.Price
-                // Add other properties as needed
-            }));
+        savedProducts.AddRange(productList
+        .Where(p => p.MerchID == null)
+        .Select(p => new Product
+        {
+            ID = p.ID,
+            Name = p.Name,
+            Description = p.Description,
+            Price = p.Price
+            // Add other properties as needed
+        }));
 
     }
 
@@ -48,7 +50,7 @@ else
             <div class="card-body">
                 <h5 class="card-title">@product?.Name</h5>
                 <p class="card-text">@product?.Description</p>
-                <blockquote class="card-text">$@(product?.Price ?? 0)</blockquote>
+                <blockquote class="card-text">@(product?.Price ?? 0) SEK</blockquote>
                 <button style="background-color: purple; color: white;" type="button" @onclick="() => Purchase(product)">Order</button>
             </div>
         </div>

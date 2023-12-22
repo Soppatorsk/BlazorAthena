@@ -382,6 +382,8 @@
                             @orderLine.Product.Name, Quantity: @orderLine.Quantity
                             <br />Price per product: @orderLine.Product.Price
                             <br>VAT @orderLine.Product.VAT%
+                            <br />Total VAT: @(Math.Round(orderLine.Product.Price * orderLine.Product.VAT / 100, 2)*orderLine.Quantity) SEK
+
                         </p>
                     }
                     <p>Total Amount: @order.SaleAmount SEK</p>
